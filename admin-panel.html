@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamHub - Panel Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #1e1b4b 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .glass-card {
+            background: rgba(15, 25, 45, 0.65);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        button {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button.danger {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        button.success {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        input, textarea, select {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 16px;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            color: #c084fc;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .badge-active { background: #10b981; }
+        .badge-inactive { background: #ef4444; }
+        .badge-host { background: #8b5cf6; }
+
+        .hidden { display: none; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: #c084fc;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Login Panel -->
+    <div id="loginPanel" class="glass-card" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h2 style="margin-bottom: 20px;">🔐 Panel Admin</h2>
+        <input type="email" id="adminEmail" placeholder="Correo electrónico" />
+        <input type="password" id="adminPassword" placeholder="Contraseña" />
+        <button id="loginBtn" style="width: 100%;">Iniciar sesión</button>
+        <button id="guestBtn" style="width: 100%; margin-top: 10px; background: #f59e0b;">🎭 Modo Invitado</button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="hidden">
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <h1>🎬 StreamHub Admin</h1>
+                <div>
+                    <span id="userInfo"></span>
+                    <button id="logoutBtn" class="danger">Cerrar sesión</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button onclick="showSection('dashboard')">📊 Dashboard</button>
+            <button onclick="showSection('users')">👥 Usuarios</button>
+            <button onclick="showSection('movies')">🎬 Películas</button>
+            <button onclick="showSection('series')">📺 Series</button>
+            <button onclick="showSection('music')">🎵 Música</button>
+            <button onclick="showSection('radios')">📻 Radios</button>
+            <button onclick="showSection('codes')">🔑 Códigos</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardSection" class="glass-card">
+            <h2>📊 Dashboard</h2>
+            <div class="stats-grid" id="statsContainer">
+                <div class="stat-card"><h3 id="totalUsers">0</h3><p>Usuarios</p></div>
+                <div class="stat-card"><h3 id="totalHosts">0</h3><p>Anfitriones</p></div>
+                <div class="stat-card"><h3 id="totalCodes">0</h3><p>Códigos</p></div>
+                <div class="stat-card"><h3 id="totalContent">0</h3><p>Contenido</p></div>
+            </div>
+            <h3>📋 Últimos usuarios</h3>
+            <div id="recentUsersList"></div>
+        </div>
+
+        <!-- Usuarios -->
+        <div id="usersSection" class="glass-card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>👥 Usuarios</h2>
+                <button id="refreshUsersBtn" class="success">🔄 Refrescar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="usersTable">
+                    <thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Películas -->
+        <div id="moviesSection" class="glass-card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>🎬 Películas</h2>
+                <button id="addMovieBtn" class="success">➕ Agregar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="moviesTable">
+                    <thead><tr><th>Título</th><th>Género</th><th>Año</th><th>Acciones</th></tr></thead>
+                    <tbody id="moviesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Series -->
+        <div id="seriesSection" class="glass-card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>📺 Series</h2>
+                <button id="addSerieBtn" class="success">➕ Agregar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="seriesTable">
+                    <thead><tr><th>Título</th><th>Género</th><th>Temporadas</th><th>Acciones</th></tr></thead>
+                    <tbody id="seriesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Música -->
+        <div id="musicSection" class="glass-card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>🎵 Música</h2>
+                <button id="addMusicBtn" class="success">➕ Agregar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="musicTable">
+                    <thead><tr><th>Título</th><th>Artista</th><th>Álbum</th><th>Acciones</th></tr></thead>
+                    <tbody id="musicTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Radios -->
+        <div id="radiosSection" class="glass-card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>📻 Radios</h2>
+                <button id="addRadioBtn" class="success">➕ Agregar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="radiosTable">
+                    <thead><tr><th>Nombre</th><th>País</th><th>Género</th><th>Acciones</th></tr></thead>
+                    <tbody id="radiosTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Códigos -->
+        <div id="codesSection" class="glass-card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h2>🔑 Códigos</h2>
+                <button id="generateCodeBtn" class="success">✨ Generar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="codesTable">
+                    <thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody id="codesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="modalTitle">Agregar Contenido</h3>
+        <div id="modalFields"></div>
+        <button id="saveBtn">Guardar</button>
+        <button id="closeModalBtn" style="background: #475569;">Cancelar</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<script>
+// TUS CREDENCIALES
+const firebaseConfig = {
+    apiKey: "AIzaSyDvfEZydbSdzZlN93WVnUnGXWdhk11xngQ",
+    authDomain: "streamhub-app-5aa0e.firebaseapp.com",
+    projectId: "streamhub-app-5aa0e",
+    storageBucket: "streamhub-app-5aa0e.firebasestorage.app",
+    messagingSenderId: "728979558000",
+    appId: "1:728979558000:web:293b0114fe0d2201e1aeb5"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentAdmin = null;
+let currentSection = 'dashboard';
+let editingData = null;
+let isGuestMode = false;
+
+function showToast(msg, isError = false) { alert(msg); }
+
+function generateCode() { return 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase(); }
+
+async function isAdmin(email) {
+    const doc = await db.collection('admin').doc('adminConfig').get();
+    return doc.exists && doc.data().adminEmail === email;
+}
+
+async function loadStats() {
+    const users = await db.collection('users').get();
+    const hosts = await db.collection('users').where('isHost', '==', true).get();
+    const codes = await db.collection('codes').where('used', '==', false).get();
+    const movies = await db.collection('movies').get();
+    const series = await db.collection('series').get();
+    
+    document.getElementById('totalUsers').innerText = users.size;
+    document.getElementById('totalHosts').innerText = hosts.size;
+    document.getElementById('totalCodes').innerText = codes.size;
+    document.getElementById('totalContent').innerText = movies.size + series.size;
+    
+    let recentHtml = '';
+    const recentUsers = [];
+    users.forEach(doc => recentUsers.push({ email: doc.data().email, time: doc.data().createdAt?.toDate?.() || new Date() }));
+    recentUsers.sort((a,b) => b.time - a.time);
+    recentUsers.slice(0,5).forEach(u => { recentHtml += `<div style="padding:8px; border-bottom:1px solid rgba(255,255,255,0.1);">📧 ${u.email}</div>`; });
+    document.getElementById('recentUsersList').innerHTML = recentHtml || '<p>No hay usuarios</p>';
+}
+
+async function loadUsers() {
+    const users = await db.collection('users').get();
+    let html = '';
+    for (const doc of users.docs) {
+        const user = doc.data();
+        html += `<td>
+            <td>${user.email}</td>
+            <td><span class="badge ${user.isHost ? 'badge-host' : ''}">${user.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
+            <td><span class="badge ${user.active !== false ? 'badge-active' : 'badge-inactive'}">${user.active !== false ? 'Activo' : 'Suspendido'}</span></td>
+            <td>
+                <button onclick="toggleUserStatus('${doc.id}', ${user.active !== false})" style="padding:5px 10px;">${user.active !== false ? 'Suspender' : 'Activar'}</button>
+                <button onclick="toggleUserHost('${doc.id}', ${user.isHost || false})" style="padding:5px 10px; background:#ff9800;">${user.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
+            </td>
+        </tr>`;
+    }
+    document.getElementById('usersTableBody').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
+}
+
+async function loadMovies() {
+    const snapshot = await db.collection('movies').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const movie = doc.data();
+        html += `<tr>
+            <td>${movie.title || ''}</td>
+            <td>${movie.genre || ''}</td>
+            <td>${movie.year || ''}</td>
+            <td><button onclick="editItem('movies', '${doc.id}')" style="padding:5px 10px;">✏️</button> <button onclick="deleteItem('movies', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
+        </tr>`;
+    });
+    document.getElementById('moviesTableBody').innerHTML = html || '</tr><td colspan="4">No hay películas</td></tr>';
+}
+
+async function loadSeries() {
+    const snapshot = await db.collection('series').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const serie = doc.data();
+        html += `<tr>
+            <td>${serie.title || ''}</td>
+            <td>${serie.genre || ''}</td>
+            <td>${serie.seasons || 0}</td>
+            <td><button onclick="editItem('series', '${doc.id}')" style="padding:5px 10px;">✏️</button> <button onclick="deleteItem('series', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
+        </tr>`;
+    });
+    document.getElementById('seriesTableBody').innerHTML = html || '<tr><td colspan="4">No hay series</td></tr>';
+}
+
+async function loadMusic() {
+    const snapshot = await db.collection('music').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const song = doc.data();
+        html += `<table>
+            <td>${song.title || ''}</td>
+            <td>${song.artist || ''}</td>
+            <td>${song.album || ''}</td>
+            <td><button onclick="editItem('music', '${doc.id}')" style="padding:5px 10px;">✏️</button> <button onclick="deleteItem('music', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
+        </tr>`;
+    });
+    document.getElementById('musicTableBody').innerHTML = html || '<tr><td colspan="4">No hay música</td></tr>';
+}
+
+async function loadRadios() {
+    const snapshot = await db.collection('radios').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const radio = doc.data();
+        html += `<tr>
+            <td>${radio.name || ''}</td>
+            <td>${radio.country || ''}</td>
+            <td>${radio.genre || ''}</td>
+            <td><button onclick="editItem('radios', '${doc.id}')" style="padding:5px 10px;">✏️</button> <button onclick="deleteItem('radios', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
+        </tr>`;
+    });
+    document.getElementById('radiosTableBody').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
+}
+
+async function loadCodes() {
+    const snapshot = await db.collection('codes').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const code = doc.data();
+        html += `<tr>
+            <td><code>${doc.id}</code></td>
+            <td><span class="badge ${code.used ? 'badge-inactive' : 'badge-active'}">${code.used ? 'Usado' : 'Disponible'}</span></td>
+            <td><button onclick="deleteCode('${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
+        </tr>`;
+    });
+    document.getElementById('codesTableBody').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
+}
+
+window.toggleUserStatus = async (uid, isActive) => {
+    if (isGuestMode) { alert('Modo invitado: no se pueden hacer cambios'); return; }
+    await db.collection('users').doc(uid).update({ active: !isActive });
+    loadUsers(); loadStats();
+};
+
+window.toggleUserHost = async (uid, isHost) => {
+    if (isGuestMode) { alert('Modo invitado: no se pueden hacer cambios'); return; }
+    await db.collection('users').doc(uid).update({ isHost: !isHost });
+    loadUsers(); loadStats();
+};
+
+window.deleteItem = async (type, id) => {
+    if (isGuestMode) { alert('Modo invitado: no se pueden eliminar'); return; }
+    if (confirm('¿Eliminar permanentemente?')) {
+        await db.collection(type).doc(id).delete();
+        refreshCurrentSection();
+    }
+};
+
+window.editItem = (type, id) => {
+    if (isGuestMode) { alert('Modo invitado: no se pueden editar'); return; }
+    editingData = { type, id };
+    db.collection(type).doc(id).get().then(doc => showModal(type, doc.data()));
+};
+
+window.deleteCode = async (codeId) => {
+    if (isGuestMode) { alert('Modo invitado: no se pueden eliminar'); return; }
+    if (confirm('¿Eliminar este código?')) {
+        await db.collection('codes').doc(codeId).delete();
+        loadCodes(); loadStats();
+    }
+};
+
+function showModal(type, data) {
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    
+    let fieldsHtml = '';
+    if (type === 'movies') {
+        modalTitle.innerText = 'Película';
+        fieldsHtml = `
+            <label>Título:</label><input id="edit_title" value="${data.title || ''}" />
+            <label>Descripción:</label><textarea id="edit_description">${data.description || ''}</textarea>
+            <label>URL Imagen:</label><input id="edit_imageUrl" value="${data.imageUrl || ''}" />
+            <label>URL Video:</label><input id="edit_videoUrl" value="${data.videoUrl || ''}" />
+            <label>Género:</label><input id="edit_genre" value="${data.genre || ''}" />
+            <label>Año:</label><input id="edit_year" value="${data.year || ''}" />
+        `;
+    } else if (type === 'series') {
+        modalTitle.innerText = 'Serie';
+        fieldsHtml = `
+            <label>Título:</label><input id="edit_title" value="${data.title || ''}" />
+            <label>Descripción:</label><textarea id="edit_description">${data.description || ''}</textarea>
+            <label>URL Imagen:</label><input id="edit_imageUrl" value="${data.imageUrl || ''}" />
+            <label>Género:</label><input id="edit_genre" value="${data.genre || ''}" />
+            <label>Temporadas:</label><input id="edit_seasons" value="${data.seasons || ''}" />
+        `;
+    } else if (type === 'music') {
+        modalTitle.innerText = 'Canción';
+        fieldsHtml = `
+            <label>Título:</label><input id="edit_title" value="${data.title || ''}" />
+            <label>Artista:</label><input id="edit_artist" value="${data.artist || ''}" />
+            <label>Álbum:</label><input id="edit_album" value="${data.album || ''}" />
+            <label>URL Audio:</label><input id="edit_audioUrl" value="${data.audioUrl || ''}" />
+            <label>URL Imagen:</label><input id="edit_imageUrl" value="${data.imageUrl || ''}" />
+        `;
+    } else if (type === 'radios') {
+        modalTitle.innerText = 'Radio';
+        fieldsHtml = `
+            <label>Nombre:</label><input id="edit_name" value="${data.name || ''}" />
+            <label>URL Stream:</label><input id="edit_streamUrl" value="${data.streamUrl || ''}" />
+            <label>País:</label><input id="edit_country" value="${data.country || ''}" />
+            <label>Género:</label><input id="edit_genre" value="${data.genre || ''}" />
+            <label>URL Imagen:</label><input id="edit_imageUrl" value="${data.imageUrl || ''}" />
+        `;
+    }
+    
+    modalFields.innerHTML = fieldsHtml;
+    modal.classList.remove('hidden');
+}
+
+function saveContent() {
+    if (!editingData) return;
+    const updateData = {};
+    const fields = ['title', 'description', 'imageUrl', 'videoUrl', 'genre', 'year', 'seasons', 'artist', 'album', 'audioUrl', 'name', 'streamUrl', 'country'];
+    fields.forEach(f => {
+        const el = document.getElementById(`edit_${f}`);
+        if (el && el.value) updateData[f] = el.value;
+    });
+    
+    db.collection(editingData.type).doc(editingData.id).update(updateData).then(() => {
+        alert('Actualizado');
+        document.getElementById('modal').classList.add('hidden');
+        refreshCurrentSection();
+    });
+}
+
+function addNewContent(type) {
+    if (isGuestMode) { alert('Modo invitado: no se puede agregar'); return; }
+    editingData = { type, id: db.collection(type).doc().id };
+    showModal(type, {});
+}
+
+async function generateNewCode() {
+    if (isGuestMode) { alert('Modo invitado: no se pueden generar códigos'); return; }
+    const codeId = generateCode();
+    await db.collection('codes').doc(codeId).set({
+        ownerId: 'admin',
+        used: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert(`✅ Código generado: ${codeId}\nGuárdalo para registrarte.`);
+    loadCodes(); loadStats();
+}
+
+function refreshCurrentSection() {
+    if (currentSection === 'users') loadUsers();
+    else if (currentSection === 'movies') loadMovies();
+    else if (currentSection === 'series') loadSeries();
+    else if (currentSection === 'music') loadMusic();
+    else if (currentSection === 'radios') loadRadios();
+    else if (currentSection === 'codes') loadCodes();
+    else if (currentSection === 'dashboard') loadStats();
+}
+
+window.showSection = (section) => {
+    currentSection = section;
+    document.querySelectorAll('#adminPanel .glass-card').forEach(p => p.classList.add('hidden'));
+    const sectionMap = {
+        'dashboard': 'dashboardSection',
+        'users': 'usersSection',
+        'movies': 'moviesSection',
+        'series': 'seriesSection',
+        'music': 'musicSection',
+        'radios': 'radiosSection',
+        'codes': 'codesSection'
+    };
+    const sectionId = sectionMap[section];
+    if (sectionId) document.getElementById(sectionId).classList.remove('hidden');
+    refreshCurrentSection();
+};
+
+// Event Listeners
+document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('adminEmail').value;
+    const pwd = document.getElementById('adminPassword').value;
+    try {
+        const cred = await auth.signInWithEmailAndPassword(email, pwd);
+        if (await isAdmin(email)) {
+            currentAdmin = cred.user;
+            isGuestMode = false;
+            document.getElementById('loginPanel').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('userInfo').innerHTML = `👤 ${email}`;
+            loadStats();
+        } else {
+            alert('❌ No eres administrador');
+            await auth.signOut();
+        }
+    } catch(e) { alert('Error: ' + e.message); }
+});
+
+document.getElementById('guestBtn').addEventListener('click', () => {
+    isGuestMode = true;
+    document.getElementById('loginPanel').classList.add('hidden');
+    document.getElementById('adminPanel').classList.remove('hidden');
+    document.getElementById('userInfo').innerHTML = '👤 Invitado (Solo lectura)';
+    loadStats();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await auth.signOut();
+    location.reload();
+});
+
+document.getElementById('refreshUsersBtn').addEventListener('click', loadUsers);
+document.getElementById('addMovieBtn').addEventListener('click', () => addNewContent('movies'));
+document.getElementById('addSerieBtn').addEventListener('click', () => addNewContent('series'));
+document.getElementById('addMusicBtn').addEventListener('click', () => addNewContent('music'));
+document.getElementById('addRadioBtn').addEventListener('click', () => addNewContent('radios'));
+document.getElementById('generateCodeBtn').addEventListener('click', generateNewCode);
+document.getElementById('saveBtn').addEventListener('click', saveContent);
+document.getElementById('closeModalBtn').addEventListener('click', () => {
+    document.getElementById('modal').classList.add('hidden');
+});
+
+// Inicializar configuración admin
+db.collection('admin').doc('adminConfig').get().then(doc => {
+    if (!doc.exists) db.collection('admin').doc('adminConfig').set({ adminEmail: 'admin@streamhub.com' });
+});
+
+// Crear colecciones si no existen
+['movies', 'series', 'music', 'radios'].forEach(col => db.collection(col).limit(1).get());
+</script>
+</body>
+</html>
