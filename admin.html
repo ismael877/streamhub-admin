@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Gestión Completa de Series</title>
+    <title>StreamHub Admin - Gestión Completa</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -35,6 +35,7 @@
             border: 1px solid rgba(255,255,255,0.2);
             color: white;
         }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #8b5cf6; }
         button {
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
             color: white;
@@ -239,6 +240,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .season-title-edit {
             background: transparent;
@@ -250,7 +252,29 @@
             margin: 0;
         }
         .season-title-edit:focus { outline: none; border-color: #8b5cf6; }
-        .edit-mode { border-color: #f59e0b; }
+        .url-edit {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-family: monospace;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .url-edit:focus { outline: none; border-color: #f59e0b; background: rgba(0,0,0,0.5); }
+        .recent-users-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .recent-user-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .recent-user-item i { color: #c084fc; }
     </style>
 </head>
 <body>
@@ -283,19 +307,28 @@
         <div id="dashboardSection" class="card">
             <h2>📊 Estadísticas</h2>
             <div class="stats" id="stats"></div>
-            <h3>Últimos usuarios</h3>
-            <div id="recentUsers"></div>
+            <h3 style="margin-top: 20px;">📧 Últimos usuarios registrados</h3>
+            <div id="recentUsers" class="recent-users-list"></div>
         </div>
 
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+            <div style="overflow-x: auto;">
+                <table style="width:100%;"><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="usersTable"></tbody></table>
+            </div>
         </div>
 
         <div id="moviesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h2>🎬 Películas</h2>
+                <button id="addMovieBtn" class="success">➕ Agregar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table style="width:100%;"><thead><tr><th>Título</th><th>Imagen</th><th>URL Reproductor</th><th>Acciones</th></tr></thead>
+                <tbody id="moviesTable"></tbody></table>
+            </div>
         </div>
 
         <div id="seriesSection" class="card hidden">
@@ -311,17 +344,20 @@
 
         <div id="musicSection" class="card hidden">
             <h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
+            <tbody id="musicTable"></tbody></table></div>
         </div>
 
         <div id="radiosSection" class="card hidden">
             <h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
+            <tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos</h2><button id="generateCode" class="success">✨ Generar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="codesTable"></tbody></table></div>
         </div>
     </div>
 </div>
@@ -366,7 +402,7 @@
 </div>
 
 <div id="seriesDetailModal" class="modal">
-    <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-content" style="max-width: 950px;">
         <div id="seriesDetailContent"></div>
     </div>
 </div>
@@ -585,9 +621,32 @@ async function loadStats() {
         const codes = await db.collection('codes').where('used', '==', false).get();
         const movies = await db.collection('movies').get();
         const series = await db.collection('series').get();
-        document.getElementById('stats').innerHTML = `<div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
+        
+        document.getElementById('stats').innerHTML = `
+            <div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
             <div class="stat-card"><h2>${codes.size}</h2><p>Códigos</p></div>
-            <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>`;
+            <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>
+        `;
+        
+        // Mostrar últimos usuarios (máximo 10)
+        const usersList = [];
+        users.forEach(doc => {
+            const userData = doc.data();
+            usersList.push({ email: userData.email, createdAt: userData.createdAt });
+        });
+        usersList.sort((a, b) => {
+            if (!a.createdAt) return 1;
+            if (!b.createdAt) return -1;
+            return b.createdAt.toDate?.() - a.createdAt.toDate?.() || 0;
+        });
+        
+        let recentHtml = '';
+        const recentUsers = usersList.slice(0, 10);
+        recentUsers.forEach(user => {
+            recentHtml += `<div class="recent-user-item"><i class="fas fa-user-circle"></i> ${escapeHtml(user.email)}</div>`;
+        });
+        document.getElementById('recentUsers').innerHTML = recentHtml || '<div class="recent-user-item">No hay usuarios registrados</div>';
+        
     } catch (error) { console.error(error); }
 }
 
@@ -597,11 +656,15 @@ async function loadUsers() {
         let html = '';
         users.forEach(doc => {
             const u = doc.data();
-            html += `<tr><td style="padding:12px;">${escapeHtml(u.email)}</td>
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(u.email)}</td>
                     <td style="padding:12px;"><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
                     <td style="padding:12px;"><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-                    <td style="padding:12px;"><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                    <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td></tr>`;
+                    <td style="padding:12px;">
+                        <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+                        <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
+                    </td>
+                </tr>`;
         });
         document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay usuarios</td></tr>';
     } catch (error) { console.error(error); }
@@ -613,13 +676,35 @@ async function loadMovies() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-                    <td style="padding:12px;"><button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+                    <td style="padding:12px; max-width:300px;"><input type="text" class="url-edit" value="${escapeHtml(data.videoUrl || '')}" 
+                        onchange="updateMovieUrl('${doc.id}', this.value)" placeholder="URL del reproductor"></td>
+                    <td style="padding:12px;"><button onclick="openEditMovieModal('${doc.id}')" style="background:#f59e0b;">✏️ Editar</button>
+                    <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
+                </tr>`;
         });
         document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay películas</td></tr>';
     } catch (error) { console.error(error); }
+}
+
+async function updateMovieUrl(docId, newUrl) {
+    if (isGuest) { showToast('Modo invitado no puede editar', true); return; }
+    try {
+        await db.collection('movies').doc(docId).update({ videoUrl: newUrl, updatedAt: new Date() });
+        showToast('✅ URL actualizada');
+        await loadMovies();
+    } catch (error) { showToast('Error al actualizar URL', true); }
+}
+
+async function updateSerieUrl(docId, newUrl) {
+    if (isGuest) { showToast('Modo invitado no puede editar', true); return; }
+    try {
+        await db.collection('series').doc(docId).update({ videoUrl: newUrl, updatedAt: new Date() });
+        showToast('✅ URL general actualizada');
+        await loadSeries();
+    } catch (error) { showToast('Error al actualizar URL', true); }
 }
 
 async function loadSeries() {
@@ -630,7 +715,7 @@ async function loadSeries() {
             return;
         }
         
-        let html = '<div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Título</th><th>Imagen</th><th>Tipo</th><th>Temporadas</th><th>Episodios</th><th>Acciones</th></tr></thead><tbody>';
+        let html = '<div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Título</th><th>Imagen</th><th>Tipo</th><th>URL Reproductor</th><th>Temporadas</th><th>Episodios</th><th>Acciones</th></tr></thead><tbody>';
         
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -639,13 +724,17 @@ async function loadSeries() {
             const contentType = data.isAnime ? '🎌 Anime' : '📺 Serie';
             const typeBadge = data.isAnime ? 'type-anime' : 'type-serie';
             
-            html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                     <td style="padding:12px;"><span class="type-badge ${typeBadge}">${contentType}</span></td>
+                    <td style="padding:12px; max-width:300px;"><input type="text" class="url-edit" value="${escapeHtml(data.videoUrl || '')}" 
+                        onchange="updateSerieUrl('${doc.id}', this.value)" placeholder="URL general de la serie"></td>
                     <td style="padding:12px;">📺 ${seasonsCount}</td>
                     <td style="padding:12px;">📋 ${episodesCount}</td>
                     <td style="padding:12px;"><button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver/Editar</button>
-                    <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+                    <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td>
+                </tr>`;
         });
         
         html += '</tbody></table></div>';
@@ -661,10 +750,11 @@ async function loadMusic() {
             const data = doc.data();
             html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td><td style="padding:12px;">${escapeHtml(data.artist)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
-                    <td style="padding:12px;">${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
-                    <td style="padding:12px;"><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+                    <td style="padding:12px;">${data.audioUrl ? data.audioUrl.substring(0,40)+'...' : '—'}</td>
+                    <td style="padding:12px;"><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                    <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
-        document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5" style="padding:40px;text-align:center;">No hay música</td></tr>';
+        document.getElementById('musicTable').innerHTML = html || '<td><td colspan="5" style="padding:40px;text-align:center;">No hay música</td></tr>';
     } catch (error) { console.error(error); }
 }
 
@@ -674,10 +764,10 @@ async function loadRadios() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td style="padding:12px;">${escapeHtml(data.name)}</td>
-                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
-                    <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
-                    <td style="padding:12px;"><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+            html += `<tr><td style="padding:12px;">${escapeHtml(data.name)}</td><td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
+                    <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,40)+'...' : '—'}</td>
+                    <td style="padding:12px;"><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                    <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
         document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay radios</td></tr>';
     } catch (error) { console.error(error); }
@@ -707,7 +797,20 @@ async function saveSeriesData(docId, seasons, totalEpisodes, esAnime, tmdbId) {
     });
 }
 
-// Agregar nueva temporada
+async function updateEpisodeUrl(docId, seasonIndex, episodeIndex, newUrl) {
+    if (isGuest) { showToast('Modo invitado no puede editar', true); return; }
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    if (seasons[seasonIndex] && seasons[seasonIndex].episodes[episodeIndex]) {
+        seasons[seasonIndex].episodes[episodeIndex].videoUrl = newUrl;
+        const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+        await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+        showToast('✅ URL del episodio actualizada');
+        viewSeriesDetails(docId);
+    }
+}
+
 window.addNewSeason = async function(docId) {
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
@@ -726,44 +829,36 @@ window.addNewSeason = async function(docId) {
     viewSeriesDetails(docId);
 };
 
-// Eliminar temporada completa
 window.deleteSeason = async function(docId, seasonIndex) {
-    if (!confirm('¿Eliminar esta temporada y TODOS sus episodios? Esta acción no se puede deshacer.')) return;
-    
+    if (!confirm('¿Eliminar esta temporada y TODOS sus episodios?')) return;
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    
     seasons.splice(seasonIndex, 1);
-    // Renumerar temporadas
     seasons.forEach((s, idx) => s.number = idx + 1);
-    
     const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
     await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
     showToast(`✅ Temporada eliminada`);
     viewSeriesDetails(docId);
 };
 
-// Actualizar título de temporada
 window.updateSeasonTitle = async function(docId, seasonIndex, newTitle) {
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    
     if (seasons[seasonIndex]) {
         seasons[seasonIndex].title = newTitle;
         const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
         await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
         showToast(`✅ Título actualizado`);
+        viewSeriesDetails(docId);
     }
 };
 
-// Agregar nuevo episodio a temporada
 window.addNewEpisode = async function(docId, seasonIndex) {
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    
     if (!seasons[seasonIndex]) return;
     
     const season = seasons[seasonIndex];
@@ -784,12 +879,10 @@ window.addNewEpisode = async function(docId, seasonIndex) {
     viewSeriesDetails(docId);
 };
 
-// Actualizar episodio
 window.updateEpisode = async function(docId, seasonIndex, episodeIndex, newTitle, newNumber) {
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    
     if (!seasons[seasonIndex] || !seasons[seasonIndex].episodes[episodeIndex]) return;
     
     const episode = seasons[seasonIndex].episodes[episodeIndex];
@@ -798,8 +891,7 @@ window.updateEpisode = async function(docId, seasonIndex, episodeIndex, newTitle
     
     episode.title = newTitle;
     
-    if (newNum !== oldNumber && !isNaN(newNum)) {
-        // Verificar si el nuevo número ya existe
+    if (newNum !== oldNumber && !isNaN(newNum) && newNum > 0) {
         const exists = seasons[seasonIndex].episodes.some(e => e.number === newNum && e !== episode);
         if (exists) {
             showToast('Ya existe un episodio con ese número', true);
@@ -817,18 +909,14 @@ window.updateEpisode = async function(docId, seasonIndex, episodeIndex, newTitle
     viewSeriesDetails(docId);
 };
 
-// Eliminar episodio
 window.deleteEpisode = async function(docId, seasonIndex, episodeIndex) {
     if (!confirm('¿Eliminar este episodio?')) return;
-    
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    
     if (!seasons[seasonIndex] || !seasons[seasonIndex].episodes[episodeIndex]) return;
     
     seasons[seasonIndex].episodes.splice(episodeIndex, 1);
-    // Renumerar episodios
     seasons[seasonIndex].episodes.forEach((e, idx) => e.number = idx + 1);
     
     const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
@@ -837,7 +925,7 @@ window.deleteEpisode = async function(docId, seasonIndex, episodeIndex) {
     viewSeriesDetails(docId);
 };
 
-// ==================== VER DETALLES DE SERIE CON EDITORES ====================
+// ==================== VER DETALLES DE SERIE ====================
 window.viewSeriesDetails = async (docId) => {
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
@@ -857,6 +945,8 @@ window.viewSeriesDetails = async (docId) => {
                 <p><strong>Género:</strong> ${data.genres || 'N/A'}</p>
                 <p><strong>TMDB ID:</strong> ${data.tmdbId}</p>
                 <p><strong>Total Episodios:</strong> ${data.totalEpisodes || 0}</p>
+                <p><strong>URL General:</strong> <input type="text" class="url-edit" value="${escapeHtml(data.videoUrl || '')}" 
+                    onchange="updateSerieUrl('${docId}', this.value)" style="font-size:11px;"></p>
             </div>
         </div>
         <div class="test-video">
@@ -912,6 +1002,11 @@ window.viewSeriesDetails = async (docId) => {
                             <button onclick="window.open('${ep.videoUrl}', '_blank')" class="info btn-small">▶️ Ver</button>
                             <button onclick="deleteEpisode('${docId}', ${sIdx}, ${eIdx})" class="danger btn-small">🗑️</button>
                         </div>
+                        <div style="width:100%; margin-top:5px;">
+                            <input type="text" class="url-edit" value="${escapeHtml(ep.videoUrl || '')}" 
+                                   onchange="updateEpisodeUrl('${docId}', ${sIdx}, ${eIdx}, this.value)" 
+                                   placeholder="URL del episodio" style="font-size:10px;">
+                        </div>
                     </div>
                 `;
             }
@@ -944,9 +1039,10 @@ function openAddModal(type) {
         modalTitle.innerText = '🎬 Nueva Película';
         modalFields.innerHTML = `
             <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>ID TMDB</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
+            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
             <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
             <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Video (puedes editarlo después)</label><input id="edit_videoUrl" placeholder="https://vimeus.com/e/movie?tmdb=ID&view_key=..."></div>
             <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
             <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3"></textarea></div>
@@ -962,6 +1058,7 @@ function openAddModal(type) {
             <div class="form-group"><label>Tipo</label><select id="edit_type"><option value="serie">📺 Serie</option><option value="anime">🎌 Anime</option></select></div>
             <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
             <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL General (puedes editarlo después)</label><input id="edit_videoUrl" placeholder="https://vimeus.com/e/serie?tmdb=ID&view_key=..."></div>
             <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
             <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3"></textarea></div>
@@ -985,6 +1082,37 @@ function openAddModal(type) {
     modal.style.display = 'flex';
 }
 
+window.openEditMovieModal = async (docId) => {
+    if (isGuest) { showToast('Modo invitado no puede editar', true); return; }
+    const doc = await db.collection('movies').doc(docId).get();
+    const data = doc.data();
+    
+    currentEditType = 'movies';
+    currentEditId = docId;
+    
+    const modal = document.getElementById('contentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    
+    modalTitle.innerText = '🎬 Editar Película';
+    modalFields.innerHTML = `
+        <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+        <div class="form-group"><label>ID TMDB</label><input id="edit_tmdbId" value="${escapeHtml(data.tmdbId || '')}"></div>
+        <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
+        <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
+        <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://vimeus.com/e/movie?tmdb=ID&view_key=..."></div>
+        <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
+        <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
+        <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
+    `;
+    
+    const img = document.getElementById('edit_imageUrl');
+    const preview = document.getElementById('imagePreview');
+    if (img && preview) img.oninput = () => { if(img.value) preview.style.backgroundImage = `url('${img.value}')`; else preview.style.backgroundImage = ''; };
+    
+    modal.style.display = 'flex';
+};
+
 async function saveContent() {
     if (!currentEditType) return;
     if (isGuest) { showToast('Modo invitado', true); closeModal(); return; }
@@ -999,10 +1127,11 @@ async function saveContent() {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
             if (tmdbId) updateData.tmdbId = tmdbId;
             if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            if (tmdbId) updateData.videoUrl = getVimeusMovieUrl(tmdbId);
+            if (tmdbId && !updateData.videoUrl) updateData.videoUrl = getVimeusMovieUrl(tmdbId);
         } else if (type === 'series') {
             const tmdbId = document.getElementById('edit_tmdbId')?.value;
             const contentType = document.getElementById('edit_type')?.value || 'serie';
@@ -1012,13 +1141,16 @@ async function saveContent() {
             updateData.contentType = contentType;
             updateData.isAnime = isAnimeContent;
             if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genres = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            if (tmdbId) updateData.videoUrl = getVimeusUrl(tmdbId, isAnimeContent);
-            updateData.seasons = [];
-            updateData.totalSeasons = 0;
-            updateData.totalEpisodes = 0;
+            if (tmdbId && !updateData.videoUrl) updateData.videoUrl = getVimeusUrl(tmdbId, isAnimeContent);
+            if (!currentEditId) {
+                updateData.seasons = [];
+                updateData.totalSeasons = 0;
+                updateData.totalEpisodes = 0;
+            }
         } else if (type === 'music') {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
             if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
@@ -1184,13 +1316,13 @@ async function isAdmin(email) {
     return email === 'admin@streamhub.com';
 }
 
-console.log('✅ Panel con gestión completa');
-console.log('📌 Funcionalidades:');
-console.log('   - ✅ Agregar/Editar/Eliminar Temporadas');
-console.log('   - ✅ Agregar/Editar/Eliminar Episodios');
-console.log('   - ✅ Editar títulos en línea');
-console.log('   - ✅ Renumeración automática');
-console.log('   - ✅ URLs de Vimeus generadas automáticamente');
+console.log('✅ Panel completamente funcional');
+console.log('📌 Características:');
+console.log('   - ✅ Últimos usuarios en Dashboard');
+console.log('   - ✅ Edición de URL en películas (campo editable)');
+console.log('   - ✅ Edición de URL general en series');
+console.log('   - ✅ Edición de URL por episodio');
+console.log('   - ✅ Gestión completa de temporadas y episodios');
 </script>
 </body>
 </html>
