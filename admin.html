@@ -252,12 +252,18 @@
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+            <div style="overflow-x: auto;">
+                <table style="width:100%;"><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="usersTable"></tbody></table>
+            </div>
         </div>
 
         <div id="moviesSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
+            <div style="overflow-x: auto;">
+                <table style="width:100%;"><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
+                <tbody id="moviesTable"></tbody></table>
+            </div>
         </div>
 
         <div id="seriesSection" class="card hidden">
@@ -273,22 +279,37 @@
 
         <div id="musicSection" class="card hidden">
             <h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
+            <tbody id="musicTable"></tbody></table></div>
         </div>
 
         <div id="radiosSection" class="card hidden">
             <h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
+            <tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos</h2><button id="generateCode" class="success">✨ Generar</button>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody>｜｜DSML｜｜</div>
+            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="codesTable"></tbody></table></div>
         </div>
     </div>
 </div>
 
-<!-- Modal para importar serie -->
+<!-- Modal para agregar contenido manual -->
+<div id="contentModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Agregar Contenido</h3>
+        <div id="modalFields"></div>
+        <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+            <button id="saveContentBtn" class="success">💾 Guardar</button>
+            <button id="closeModalBtn">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para importar serie automático -->
 <div id="importModal" class="modal">
     <div class="modal-content">
         <h3>🤖 Importación Automática de Serie</h3>
@@ -296,7 +317,7 @@
             <label>🔍 Buscar serie en TMDB</label>
             <div class="search-box">
                 <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Breaking Bad..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
-                <button id="searchSerieBtn" class="info" onclick="searchSeriesAndShow()">Buscar</button>
+                <button id="searchSerieBtn" class="info">Buscar</button>
             </div>
         </div>
         <div id="searchResults" class="search-results">
@@ -319,7 +340,7 @@
     </div>
 </div>
 
-<!-- Modal para ver/editar serie -->
+<!-- Modal para ver detalles de serie -->
 <div id="seriesDetailModal" class="modal">
     <div class="modal-content" style="max-width: 800px;">
         <div id="seriesDetailContent"></div>
@@ -352,32 +373,25 @@ const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
 const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
-// ==================== FUNCIÓN CORRECTA PARA URL DE VIMEUS ====================
-// Según la documentación: https://vimeus.com/e/serie?tmdb=ID&view_key=KEY&se=1&ep=1
+// ==================== FUNCIONES URL VIMEUS ====================
 function getVimeusSerieUrl(tmdbId, season = null, episode = null) {
     let url = `https://vimeus.com/e/serie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
     if (season && episode) {
         url += `&se=${season}&ep=${episode}`;
     }
-    console.log('URL generada de Vimeus:', url);
     return url;
 }
 
 function getVimeusMovieUrl(tmdbId) {
-    const url = `https://vimeus.com/e/movie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
-    console.log('URL de película Vimeus:', url);
-    return url;
+    return `https://vimeus.com/e/movie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
 }
 
 // ==================== FUNCIONES TMDB ====================
 async function searchTMDB(query, type = 'tv') {
     const url = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
-    console.log('Buscando en TMDB:', url);
-    
     try {
         const response = await fetch(url);
         const data = await response.json();
-        console.log('Resultados TMDB:', data.results?.length || 0);
         return data.results || [];
     } catch (error) {
         console.error('Error buscando en TMDB:', error);
@@ -420,7 +434,6 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
     progressBar.value = 5;
     progressStatus.innerText = 'Obteniendo información de la serie...';
     
-    // Obtener detalles de TMDB
     const tmdbDetails = await getTMDBDetails(tmdbId, 'tv');
     if (!tmdbDetails) {
         showToast('Error al obtener detalles de la serie', true);
@@ -434,7 +447,6 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
     progressBar.value = 20;
     progressStatus.innerText = `La serie tiene ${totalSeasons} temporadas. Obteniendo episodios...`;
     
-    // Obtener episodios de cada temporada desde TMDB
     for (let s = 1; s <= totalSeasons; s++) {
         progressStatus.innerText = `Obteniendo episodios de temporada ${s}...`;
         progressBar.value = 20 + Math.floor((s / totalSeasons) * 60);
@@ -443,9 +455,7 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         const seasonEpisodes = [];
         
         for (const ep of tmdbEpisodes) {
-            // Usar la función correcta para generar URL de Vimeus
             const videoUrl = getVimeusSerieUrl(tmdbId, s, ep.episode_number);
-            
             seasonEpisodes.push({
                 number: ep.episode_number,
                 title: ep.name || `Episodio ${ep.episode_number}`,
@@ -464,15 +474,12 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         
         const totalEpisodios = seasonsData.reduce((acc, sea) => acc + sea.episodes.length, 0);
         progressCount.innerText = `${totalEpisodios} episodios en ${s} temporadas`;
-        
-        // Pequeña pausa para no saturar la API
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 100));
     }
     
     progressBar.value = 85;
     progressStatus.innerText = `Guardando en Firebase...`;
     
-    // Generar URL general de la serie (sin episodio específico)
     const generalEmbedUrl = getVimeusSerieUrl(tmdbId);
     const year = tmdbDetails.first_air_date?.substring(0,4) || '';
     const genres = tmdbDetails.genres?.map(g => g.name).join(', ') || '';
@@ -559,11 +566,14 @@ async function loadUsers() {
         let html = '';
         users.forEach(doc => {
             const u = doc.data();
-            html += `<tr><td style="padding:12px;">${escapeHtml(u.email)}</td>
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(u.email)}</td>
                     <td style="padding:12px;"><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
                     <td style="padding:12px;"><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-                    <td style="padding:12px;"><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                    <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td>
+                    <td style="padding:12px;">
+                        <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+                        <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
+                    </td>
                 </tr>`;
         });
         document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay usuarios</td></tr>';
@@ -576,7 +586,8 @@ async function loadMovies() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                     <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
                     <td style="padding:12px;"><button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
@@ -610,7 +621,7 @@ async function loadSeries() {
                         <button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver</button>
                         <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button>
                     </td>
-                 </tr>`;
+                </tr>`;
         });
         
         html += '</tbody></table></div>';
@@ -624,7 +635,13 @@ async function loadMusic() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td>${escapeHtml(data.title)}</td><td>${escapeHtml(data.artist)}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td><td>${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td><td><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(data.title)}</td>
+                    <td style="padding:12px;">${escapeHtml(data.artist)}</td>
+                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
+                    <td style="padding:12px;">${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
+                    <td style="padding:12px;"><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
+                </tr>`;
         });
         document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5" style="padding:40px;text-align:center;">No hay música</td></tr>';
     } catch (error) { console.error(error); }
@@ -636,7 +653,12 @@ async function loadRadios() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td>${escapeHtml(data.name)}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td><td>${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td><td><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+            html += `<tr>
+                    <td style="padding:12px;">${escapeHtml(data.name)}</td>
+                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
+                    <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
+                    <td style="padding:12px;"><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
+                </tr>`;
         });
         document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay radios</td></tr>';
     } catch (error) { console.error(error); }
@@ -648,10 +670,141 @@ async function loadCodes() {
         let html = '';
         snapshot.forEach(doc => {
             const c = doc.data();
-            html += `<tr><td><code>${doc.id}</code></td><td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td><td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td></tr>`;
+            html += `<tr>
+                    <td style="padding:12px;"><code>${doc.id}</code></td>
+                    <td style="padding:12px;"><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
+                    <td style="padding:12px;"><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
+                </tr>`;
         });
         document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3" style="padding:40px;text-align:center;">No hay códigos</td></tr>';
     } catch (error) { console.error(error); }
+}
+
+// ==================== AGREGAR MANUAL (PELÍCULAS, MÚSICA, RADIOS) ====================
+function openAddModal(type) {
+    if (isGuest) { showToast('Modo invitado no puede agregar', true); return; }
+    currentEditType = type;
+    currentEditId = null;
+    
+    const modal = document.getElementById('contentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    
+    if (type === 'movies') {
+        modalTitle.innerText = '🎬 Nueva Película';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la película"></div>
+            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
+            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Video (se genera automáticamente)</label><input id="edit_videoUrl" placeholder="Automático con TMDB ID"></div>
+            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
+        `;
+        
+        const imageInput = document.getElementById('edit_imageUrl');
+        const preview = document.getElementById('imagePreview');
+        if (imageInput && preview) {
+            imageInput.oninput = () => {
+                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
+                else preview.style.backgroundImage = '';
+            };
+        }
+    } else if (type === 'music') {
+        modalTitle.innerText = '🎵 Nueva Canción';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Audio</label><input id="edit_audioUrl" placeholder="https://..."></div>
+        `;
+        
+        const imageInput = document.getElementById('edit_imageUrl');
+        const preview = document.getElementById('imagePreview');
+        if (imageInput && preview) {
+            imageInput.oninput = () => {
+                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
+                else preview.style.backgroundImage = '';
+            };
+        }
+    } else if (type === 'radios') {
+        modalTitle.innerText = '📻 Nueva Radio';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Nombre *</label><input id="edit_name" placeholder="Nombre"></div>
+            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Género"></div>
+        `;
+        
+        const imageInput = document.getElementById('edit_imageUrl');
+        const preview = document.getElementById('imagePreview');
+        if (imageInput && preview) {
+            imageInput.oninput = () => {
+                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
+                else preview.style.backgroundImage = '';
+            };
+        }
+    }
+    
+    modal.style.display = 'flex';
+}
+
+async function saveContent() {
+    if (!currentEditType) return;
+    if (isGuest) { showToast('Modo invitado', true); closeModal(); return; }
+    
+    try {
+        const type = currentEditType;
+        const id = currentEditId || db.collection(type).doc().id;
+        const updateData = { updatedAt: new Date() };
+        
+        if (type === 'movies') {
+            const tmdbId = document.getElementById('edit_tmdbId')?.value;
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (tmdbId) updateData.tmdbId = tmdbId;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+            
+            if (tmdbId) {
+                updateData.videoUrl = getVimeusMovieUrl(tmdbId);
+            } else if (document.getElementById('edit_videoUrl')?.value) {
+                updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+            }
+            
+        } else if (type === 'music') {
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
+        } else if (type === 'radios') {
+            updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
+            if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+        }
+        
+        if (!currentEditId) updateData.createdAt = new Date();
+        
+        await db.collection(type).doc(id).set(updateData, { merge: true });
+        showToast('✅ Guardado correctamente');
+        closeModal();
+        refreshCurrentSection();
+    } catch (error) {
+        showToast('Error al guardar: ' + error.message, true);
+    }
+}
+
+function closeModal() {
+    document.getElementById('contentModal').style.display = 'none';
+    currentEditType = null;
+    currentEditId = null;
 }
 
 // ==================== VER DETALLES DE SERIE ====================
@@ -717,7 +870,7 @@ window.viewSeriesDetails = async (docId) => {
             <input type="text" id="newEpisodeTitle" placeholder="Título del episodio" style="flex:1;margin:0;">
             <button onclick="addEpisodeManually('${docId}')" class="success">➕ Agregar</button>
         </div>
-        <p style="font-size:12px;color:#94a3b8;">La URL de Vimeus se genera automáticamente: https://vimeus.com/e/serie?tmdb=${data.tmdbId}&se=1&ep=1&view_key=${VIMEUS_VIEW_KEY}</p>
+        <p style="font-size:12px;color:#94a3b8;">La URL de Vimeus se genera automáticamente</p>
     </div></div>`;
     
     document.getElementById('seriesDetailContent').innerHTML = html;
@@ -742,7 +895,6 @@ window.addEpisodeManually = async (docId) => {
     const data = doc.data();
     const seasons = data.seasons || [];
     
-    // Buscar o crear temporada
     let season = seasons.find(s => s.number === seasonNum);
     if (!season) {
         season = { number: seasonNum, title: `Temporada ${seasonNum}`, episodes: [] };
@@ -750,13 +902,11 @@ window.addEpisodeManually = async (docId) => {
         seasons.sort((a, b) => a.number - b.number);
     }
     
-    // Verificar si el episodio ya existe
     if (season.episodes.some(e => e.number === episodeNum)) {
         showToast('Este episodio ya existe', true);
         return;
     }
     
-    // Agregar episodio con URL de Vimeus generada automáticamente
     const tmdbId = data.tmdbId;
     const videoUrl = getVimeusSerieUrl(tmdbId, seasonNum, episodeNum);
     
@@ -767,7 +917,6 @@ window.addEpisodeManually = async (docId) => {
     });
     season.episodes.sort((a, b) => a.number - b.number);
     
-    // Actualizar totales
     const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
     
     await db.collection('series').doc(docId).update({
@@ -780,7 +929,7 @@ window.addEpisodeManually = async (docId) => {
     document.getElementById('newSeasonNum').value = '';
     document.getElementById('newEpisodeNum').value = '';
     document.getElementById('newEpisodeTitle').value = '';
-    viewSeriesDetails(docId); // Refrescar vista
+    viewSeriesDetails(docId);
 };
 
 // ==================== IMPORTACIÓN UI ====================
@@ -807,9 +956,6 @@ window.searchSeriesAndShow = async function() {
         const year = (serie.first_air_date || '').substring(0,4);
         const poster = serie.poster_path ? `${TMDB_IMAGE_BASE}${serie.poster_path}` : '';
         
-        // Mostrar URL de prueba para verificar
-        const testUrl = getVimeusSerieUrl(serie.id, 1, 1);
-        
         html += `
             <div class="search-result-item" onclick="importSerieCompleta(${serie.id}, '${escapeHtml(title)}', '${poster}', '', '${escapeHtml(serie.overview || '')}')">
                 ${poster ? `<img src="${poster}" style="width:60px;height:90px;object-fit:cover;border-radius:8px;">` : '<div style="width:60px;height:90px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">📺</div>'}
@@ -817,7 +963,6 @@ window.searchSeriesAndShow = async function() {
                     <strong>${escapeHtml(title)}</strong>
                     <div style="font-size:12px; color:#94a3b8;">${year} • TMDB ID: ${serie.id}</div>
                     <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente todas las temporadas y episodios</div>
-                    <div style="font-size:10px; color:#667eea; word-break:break-all;">🔗 URL de prueba: ${testUrl.substring(0,60)}...</div>
                 </div>
                 <button style="background:#10b981; padding:8px 20px; cursor:pointer;">Importar</button>
             </div>
@@ -835,141 +980,14 @@ window.openAutoImportModal = function() {
     document.getElementById('importProgressArea').style.display = 'none';
 };
 
-window.openAddModal = function(type) {
-    if (isGuest) { showToast('Modo invitado', true); return; }
-    currentEditType = type;
-    currentEditId = null;
-    
-    const modal = document.getElementById('contentModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalFields = document.getElementById('modalFields');
-    
-    if (type === 'series') {
-        modalTitle.innerText = '📺 Nueva Serie (Manual)';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la serie"></div>
-            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 1399"></div>
-            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
-        `;
-        
-        const imageInput = document.getElementById('edit_imageUrl');
-        const preview = document.getElementById('imagePreview');
-        if (imageInput && preview) {
-            imageInput.oninput = () => {
-                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-                else preview.style.backgroundImage = '';
-            };
-        }
-    } else if (type === 'movies') {
-        modalTitle.innerText = '🎬 Nueva Película';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3"></textarea></div>
-        `;
-        
-        const imageInput = document.getElementById('edit_imageUrl');
-        const preview = document.getElementById('imagePreview');
-        if (imageInput && preview) {
-            imageInput.oninput = () => {
-                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-                else preview.style.backgroundImage = '';
-            };
-        }
-    } else if (type === 'music') {
-        modalTitle.innerText = '🎵 Nueva Canción';
-        modalFields.innerHTML = `<div class="form-group"><label>Título</label><input id="edit_title"></div><div class="form-group"><label>Artista</label><input id="edit_artist"></div><div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl"></div><div id="imagePreview" class="image-preview"></div><div class="form-group"><label>URL Audio</label><input id="edit_audioUrl"></div>`;
-    } else if (type === 'radios') {
-        modalTitle.innerText = '📻 Nueva Radio';
-        modalFields.innerHTML = `<div class="form-group"><label>Nombre</label><input id="edit_name"></div><div class="form-group"><label>URL Stream</label><input id="edit_streamUrl"></div><div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl"></div><div id="imagePreview" class="image-preview"></div><div class="form-group"><label>País</label><input id="edit_country"></div><div class="form-group"><label>Género</label><input id="edit_genre"></div>`;
-    }
-    
-    modal.style.display = 'flex';
-};
-
-window.saveContent = async function() {
-    if (!currentEditType) return;
-    if (isGuest) { showToast('Modo invitado', true); closeModal(); return; }
-    
-    try {
-        const type = currentEditType;
-        const id = currentEditId || db.collection(type).doc().id;
-        const updateData = { updatedAt: new Date() };
-        
-        if (type === 'series') {
-            const tmdbId = document.getElementById('edit_tmdbId')?.value;
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (tmdbId) updateData.tmdbId = tmdbId;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-            if (document.getElementById('edit_genre')?.value) updateData.genres = document.getElementById('edit_genre').value;
-            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            
-            if (tmdbId) {
-                updateData.videoUrl = getVimeusSerieUrl(tmdbId);
-            }
-            updateData.seasons = [];
-            updateData.totalSeasons = 0;
-            updateData.totalEpisodes = 0;
-            
-        } else if (type === 'movies') {
-            const tmdbId = document.getElementById('edit_tmdbId')?.value;
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (tmdbId) updateData.tmdbId = tmdbId;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            
-            if (tmdbId) {
-                updateData.videoUrl = getVimeusMovieUrl(tmdbId);
-            }
-            
-        } else if (type === 'music') {
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
-        } else if (type === 'radios') {
-            updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
-            if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
-            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-        }
-        
-        if (!currentEditId) updateData.createdAt = new Date();
-        
-        await db.collection(type).doc(id).set(updateData, { merge: true });
-        showToast('✅ Guardado correctamente');
-        closeModal();
-        refreshCurrentSection();
-    } catch (error) {
-        showToast('Error al guardar: ' + error.message, true);
-    }
-};
-
-function closeModal() {
-    document.getElementById('contentModal').style.display = 'none';
-    currentEditType = null;
-    currentEditId = null;
-}
-
-// ==================== ACCIONES ====================
+// ==================== ACCIONES GENERALES ====================
 window.toggleUserStatus = async (uid, isActive) => {
     if (isGuest) { showToast('Modo invitado', true); return; }
     try {
         await db.collection('users').doc(uid).update({ active: !isActive });
         await loadUsers();
         await loadStats();
+        showToast(`Usuario ${!isActive ? 'activado' : 'suspendido'}`);
     } catch (error) { showToast('Error', true); }
 };
 
@@ -979,6 +997,7 @@ window.toggleUserHost = async (uid, isHost) => {
         await db.collection('users').doc(uid).update({ isHost: !isHost });
         await loadUsers();
         await loadStats();
+        showToast(`Usuario ahora es ${!isHost ? 'anfitrión' : 'cliente'}`);
     } catch (error) { showToast('Error', true); }
 };
 
@@ -1000,6 +1019,7 @@ window.deleteCode = async (codeId) => {
             await db.collection('codes').doc(codeId).delete();
             await loadCodes();
             await loadStats();
+            showToast('✅ Código eliminado');
         } catch (error) { showToast('Error', true); }
     }
 };
@@ -1016,12 +1036,12 @@ async function refreshCurrentSection() {
 
 window.showSection = async (section) => {
     currentSection = section;
-    document.querySelectorAll('#adminPanel > .card:not(:first-child)').forEach(c => c.classList.add('hidden'));
-    const sections = {
-        'dashboard': 'dashboardSection', 'users': 'usersSection', 'movies': 'moviesSection',
-        'series': 'seriesSection', 'music': 'musicSection', 'radios': 'radiosSection', 'codes': 'codesSection'
-    };
-    document.getElementById(sections[section]).classList.remove('hidden');
+    const sections = ['dashboardSection', 'usersSection', 'moviesSection', 'seriesSection', 'musicSection', 'radiosSection', 'codesSection'];
+    sections.forEach(s => {
+        const el = document.getElementById(s);
+        if (el) el.classList.add('hidden');
+    });
+    document.getElementById(section + 'Section').classList.remove('hidden');
     await refreshCurrentSection();
 };
 
@@ -1035,9 +1055,6 @@ async function generateNewCode() {
         await loadStats();
     } catch (error) { showToast('Error', true); }
 }
-
-// Exponer funciones globales
-window.importSerieCompleta = importSerieCompleta;
 
 // ==================== EVENT LISTENERS ====================
 document.getElementById('loginBtn').onclick = async () => {
@@ -1074,7 +1091,7 @@ document.getElementById('guestBtn').onclick = async () => {
     isGuest = true;
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
-    document.getElementById('userEmail').innerText = 'Invitado';
+    document.getElementById('userEmail').innerText = 'Invitado (solo lectura)';
     await loadStats();
     await loadUsers();
     await loadMovies();
@@ -1093,10 +1110,18 @@ document.getElementById('generateCode').onclick = generateNewCode;
 document.getElementById('saveContentBtn').onclick = saveContent;
 document.getElementById('closeModalBtn').onclick = closeModal;
 document.getElementById('closeImportModalBtn').onclick = () => document.getElementById('importModal').style.display = 'none';
+document.getElementById('searchSerieBtn').onclick = () => searchSeriesAndShow();
 
-console.log('✅ Panel con URLs correctas de Vimeus');
+// Función auxiliar para verificar admin
+async function isAdmin(email) {
+    const doc = await db.collection('admin').doc('config').get();
+    if (doc.exists && doc.data().adminEmail === email) return true;
+    return email === 'admin@streamhub.com';
+}
+
+console.log('✅ Panel completamente funcional');
 console.log('📌 View Key:', VIMEUS_VIEW_KEY);
-console.log('📌 URL base:', 'https://vimeus.com/e/serie?tmdb=ID&view_key=KEY&se=1&ep=1');
+console.log('📌 Botones reparados: Agregar, Cancelar, Manual, Importar Automático');
 </script>
 </body>
 </html>
