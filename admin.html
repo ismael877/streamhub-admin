@@ -96,58 +96,6 @@
             margin-bottom: 10px;
             background-color: #0f172a;
         }
-        
-        .seasons-container {
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 20px;
-        }
-        .seasons-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #c084fc;
-        }
-        .season-card {
-            background: rgba(0,0,0,0.4);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .season-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .season-number-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #c084fc;
-        }
-        .episodes-list { margin-left: 20px; margin-top: 15px; }
-        .episode-item {
-            background: rgba(255,255,255,0.05);
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-        .episode-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .btn-icon { padding: 6px 12px; font-size: 0.75rem; }
-        .add-episode-btn { margin-top: 10px; width: 100%; }
-        .add-season-btn { margin-top: 15px; width: 100%; background: linear-gradient(90deg, #10b981, #059669); }
         .search-results {
             background: #0f172a;
             border-radius: 16px;
@@ -209,7 +157,7 @@
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"> table <thead> <tr> <th>Email</th> <th>Rol</th> <th>Estado</th> <th>Acciones</th> </tr> </thead> <tbody id="usersTable"></tbody> </table> </div>
+            <div style="overflow-x: auto;"> <table> <thead> <tr> <th>Email</th> <th>Rol</th> <th>Estado</th> <th>Acciones</th> </tr> </thead> <tbody id="usersTable"></tbody> </table> </div>
         </div>
 
         <!-- Películas -->
@@ -339,30 +287,30 @@ async function loadMovies() {
     snapshot.forEach(doc => {
         const data = doc.data();
         html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
+            <td style="padding:12px;">${data.title || '—'}</td>
+            <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
+            <td style="padding:12px;"><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
         </tr>`;
     });
     document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4">No hay películas</td></tr>';
 }
 
-// ==================== FUNCIÓN LOAD SERIES CORREGIDA (CON EL MISMO FORMATO QUE EL TEST) ====================
+// ==================== LOAD SERIES FUNCIONAL ====================
 async function loadSeries() {
-    const listDiv = document.getElementById('seriesList');
-    listDiv.innerHTML = '<div class="loading-text">Cargando series...</div>';
+    const seriesDiv = document.getElementById('seriesList');
+    seriesDiv.innerHTML = '<div class="loading-text">Cargando series...</div>';
     
     try {
         const snapshot = await db.collection('series').get();
         console.log('Series encontradas:', snapshot.size);
         
         if (snapshot.size === 0) {
-            listDiv.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "+ Agregar Serie" para crear una.</div>';
+            seriesDiv.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "+ Agregar Serie" para crear una.</div>';
             return;
         }
         
-        let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse;"><thead><tr><th style="padding:12px; text-align:left; color:#c084fc;">Título</th><th style="padding:12px; text-align:left; color:#c084fc;">Imagen</th><th style="padding:12px; text-align:left; color:#c084fc;">Año</th><th style="padding:12px; text-align:left; color:#c084fc;">Temporadas</th><th style="padding:12px; text-align:left; color:#c084fc;">Episodios</th><th style="padding:12px; text-align:left; color:#c084fc;">Acciones</th></tr></thead><tbody>';
+        let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse;"><thead><tr><th style="padding:12px; color:#c084fc;">Título</th><th style="padding:12px; color:#c084fc;">Imagen</th><th style="padding:12px; color:#c084fc;">Año</th><th style="padding:12px; color:#c084fc;">Acciones</th></tr></thead><tbody>';
         
         snapshot.forEach(doc => {
             const data = doc.data();
@@ -370,24 +318,10 @@ async function loadSeries() {
             const year = data.year || '—';
             const imageUrl = data.imageUrl || '';
             
-            let seasonsCount = 0;
-            let episodesCount = 0;
-            
-            if (data.seasons && Array.isArray(data.seasons)) {
-                seasonsCount = data.seasons.length;
-                data.seasons.forEach(season => {
-                    if (season.episodes && Array.isArray(season.episodes)) {
-                        episodesCount += season.episodes.length;
-                    }
-                });
-            }
-            
             html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <td style="padding:12px;">${escapeHtml(title)}</td>
                 <td style="padding:12px;">${imageUrl ? `<img src="${imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                 <td style="padding:12px;">${escapeHtml(year)}</td>
-                <td style="padding:12px;">${seasonsCount}</td>
-                <td style="padding:12px;">${episodesCount}</td>
                 <td style="padding:12px;">
                     <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b; border:none; padding:5px 10px; border-radius:20px; cursor:pointer;">✏️</button>
                     <button onclick="deleteItem('series', '${doc.id}')" style="background:#ef4444; border:none; padding:5px 10px; border-radius:20px; cursor:pointer;">🗑️</button>
@@ -396,11 +330,11 @@ async function loadSeries() {
         });
         
         html += '</tbody></table></div>';
-        listDiv.innerHTML = html;
+        seriesDiv.innerHTML = html;
         
     } catch (error) {
         console.error('Error loading series:', error);
-        listDiv.innerHTML = `<div class="loading-text" style="color:#ef4444;">❌ Error al cargar las series: ${error.message}</div>`;
+        seriesDiv.innerHTML = `<div class="loading-text" style="color:#ef4444;">❌ Error al cargar las series: ${error.message}</div>`;
     }
 }
 
@@ -410,11 +344,11 @@ async function loadMusic() {
     snapshot.forEach(doc => {
         const data = doc.data();
         html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.artist || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
+            <td style="padding:12px;">${data.title || '—'}</td>
+            <td style="padding:12px;">${data.artist || '—'}</td>
+            <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td style="padding:12px;">${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
+            <td style="padding:12px;"><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
         </tr>`;
     });
     document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
@@ -426,10 +360,10 @@ async function loadRadios() {
     snapshot.forEach(doc => {
         const data = doc.data();
         html += `<tr>
-            <td>${data.name || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
+            <td style="padding:12px;">${data.name || '—'}</td>
+            <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
+            <td style="padding:12px;"><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
         </tr>`;
     });
     document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
@@ -441,11 +375,11 @@ async function loadMusicVideos() {
     snapshot.forEach(doc => {
         const data = doc.data();
         html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.artist || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
+            <td style="padding:12px;">${data.title || '—'}</td>
+            <td style="padding:12px;">${data.artist || '—'}</td>
+            <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
+            <td style="padding:12px;"><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button> <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
         </tr>`;
     });
     document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
@@ -457,15 +391,15 @@ async function loadCodes() {
     snapshot.forEach(doc => {
         const c = doc.data();
         html += `<tr>
-            <td><code>${doc.id}</code></td>
-            <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-            <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
+            <td style="padding:12px;"><code>${doc.id}</code></td>
+            <td style="padding:12px;"><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
+            <td style="padding:12px;"><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
         </tr>`;
     });
     document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
 }
 
-// ==================== FUNCIONES DE EDICIÓN SIMPLIFICADAS ====================
+// ==================== FUNCIONES DE EDICIÓN ====================
 function openAddModal(type) {
     if (isGuest) { alert('Modo invitado'); return; }
     currentEditType = type;
@@ -496,6 +430,34 @@ function openAddModal(type) {
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
             <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
         `;
+    } else if (type === 'music') {
+        modalTitle.innerText = '🎵 Nueva Canción';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Audio/Video</label><input id="edit_audioUrl" placeholder="https://..."></div>
+        `;
+    } else if (type === 'radios') {
+        modalTitle.innerText = '📻 Nueva Radio';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Nombre *</label><input id="edit_name" placeholder="Nombre"></div>
+            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Género"></div>
+        `;
+    } else if (type === 'musicVideos') {
+        modalTitle.innerText = '🎤 Nuevo Video Musical';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
+        `;
     }
     
     const imageInput = document.getElementById('edit_imageUrl');
@@ -514,6 +476,61 @@ function openAddModal(type) {
     modal.style.display = 'flex';
 }
 
+window.openEditModal = async (type, id) => {
+    if (isGuest) { alert('Modo invitado'); return; }
+    const doc = await db.collection(type).doc(id).get();
+    if (doc.exists) {
+        currentEditType = type;
+        currentEditId = id;
+        
+        const modal = document.getElementById('contentModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalFields = document.getElementById('modalFields');
+        const data = doc.data();
+        
+        if (type === 'series') {
+            modalTitle.innerText = '📺 Editar Serie';
+            modalFields.innerHTML = `
+                <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+                <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
+                <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
+                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
+                <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
+            `;
+        } else if (type === 'movies') {
+            modalTitle.innerText = '🎬 Editar Película';
+            modalFields.innerHTML = `
+                <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+                <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
+                <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
+                <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
+                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
+                <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
+            `;
+        } else {
+            openAddModal(type);
+            return;
+        }
+        
+        const imageInput = document.getElementById('edit_imageUrl');
+        const preview = document.getElementById('imagePreview');
+        if (imageInput && preview) {
+            imageInput.oninput = () => {
+                if (imageInput.value) {
+                    preview.style.backgroundImage = `url('${imageInput.value}')`;
+                    preview.style.backgroundSize = 'cover';
+                } else {
+                    preview.style.backgroundImage = '';
+                }
+            };
+        }
+        
+        modal.style.display = 'flex';
+    }
+};
+
 async function saveContent() {
     if (!currentEditType) return;
     if (isGuest) { alert('Modo invitado'); closeModal(); return; }
@@ -528,7 +545,6 @@ async function saveContent() {
         if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
         if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
         if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-        updateData.seasons = [];
     } else if (type === 'movies') {
         updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
         if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
@@ -536,6 +552,22 @@ async function saveContent() {
         if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
         if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
         if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+    } else if (type === 'music') {
+        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
+    } else if (type === 'radios') {
+        updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
+        if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
+        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+    } else if (type === 'musicVideos') {
+        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
     }
     
     if (!currentEditId) updateData.createdAt = new Date();
