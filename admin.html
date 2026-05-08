@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Vimeus Integration (Corregido)</title>
+    <title>StreamHub Admin - Gestión Completa de Series</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -122,7 +122,9 @@
             padding: 20px;
             margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
         }
+        .season-card:hover { border-color: #8b5cf6; }
         .season-header {
             display: flex;
             justify-content: space-between;
@@ -144,10 +146,23 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 10px;
+            transition: all 0.2s;
         }
+        .episode-item:hover { background: rgba(255,255,255,0.1); }
         .episode-info { flex: 1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .episode-number { font-weight: bold; color: #c084fc; min-width: 50px; }
         .episode-title { flex: 1; }
+        .episode-title-input { 
+            background: transparent; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            padding: 5px 10px; 
+            border-radius: 20px; 
+            font-size: 12px;
+            width: auto;
+            min-width: 150px;
+            margin: 0;
+        }
+        .episode-title-input:focus { outline: none; border-color: #8b5cf6; }
         .btn-small { padding: 5px 10px; font-size: 12px; }
         .vimeus-badge {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -220,10 +235,22 @@
         }
         .type-anime { background: #f59e0b; }
         .type-serie { background: #3b82f6; }
-        .episode-fixed {
-            background: rgba(16, 185, 129, 0.2);
-            border-left: 3px solid #10b981;
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
+        .season-title-edit {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            width: auto;
+            margin: 0;
+        }
+        .season-title-edit:focus { outline: none; border-color: #8b5cf6; }
+        .edit-mode { border-color: #f59e0b; }
     </style>
 </head>
 <body>
@@ -239,7 +266,7 @@
 
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Vimeus + TMDB</span></h1>
+            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Gestión Completa</span></h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
 
@@ -323,7 +350,6 @@
         <div id="searchResults" class="search-results">
             <div class="loading-text">🔍 Escribe el nombre y haz clic en Buscar</div>
         </div>
-        
         <div id="importProgressArea" style="display: none;">
             <div class="progress-container">
                 <progress id="importProgress" value="0" max="100"></progress>
@@ -333,7 +359,6 @@
                 </div>
             </div>
         </div>
-        
         <div class="modal-buttons" style="margin-top: 20px;">
             <button id="closeImportModalBtn">Cancelar</button>
         </div>
@@ -341,7 +366,7 @@
 </div>
 
 <div id="seriesDetailModal" class="modal">
-    <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-content" style="max-width: 900px;">
         <div id="seriesDetailContent"></div>
     </div>
 </div>
@@ -372,10 +397,8 @@ const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
 const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
-// Palabras clave para detectar animes
 const ANIME_KEYWORDS = ['anime', 'shippuden', 'dragon ball', 'naruto', 'one piece', 'bleach', 'attack on titan', 
-                        'jujutsu', 'demon slayer', 'kimetsu', 'my hero academia', 'tokyo ghoul', 'death note',
-                        'fullmetal', 'steins;gate', 'cowboy bebop', 'evangelion', 'sword art online'];
+                        'jujutsu', 'demon slayer', 'kimetsu', 'my hero academia', 'tokyo ghoul', 'death note'];
 
 function isAnime(title, genres = []) {
     const titleLower = title.toLowerCase();
@@ -385,7 +408,6 @@ function isAnime(title, genres = []) {
     return false;
 }
 
-// ==================== FUNCIÓN CORREGIDA: URL DE VIMEUS ====================
 function getVimeusUrl(tmdbId, isAnimeContent = false, season = null, episode = null) {
     const endpoint = isAnimeContent ? 'anime' : 'serie';
     let url = `https://vimeus.com/e/${endpoint}?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
@@ -436,7 +458,7 @@ async function getTMDBSeasonEpisodes(tmdbId, seasonNumber) {
     }
 }
 
-// ==================== IMPORTACIÓN CORREGIDA ====================
+// ==================== IMPORTACIÓN AUTOMÁTICA ====================
 async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, overview) {
     const progressDiv = document.getElementById('importProgressArea');
     const progressBar = document.getElementById('importProgress');
@@ -455,8 +477,6 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
     }
     
     const esAnime = isAnime(titulo, tmdbDetails.genres);
-    console.log(`🎬 "${titulo}" - ¿Es anime? ${esAnime}`);
-    
     const totalSeasons = tmdbDetails.number_of_seasons || 1;
     const seasonsData = [];
     
@@ -470,13 +490,9 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         const tmdbEpisodes = await getTMDBSeasonEpisodes(tmdbId, s);
         const seasonEpisodes = [];
         
-        // IMPORTANTE: Usamos el número de episodio DENTRO de la temporada
-        // Vimeus espera: se=1&ep=1, se=1&ep=2, se=2&ep=1, se=2&ep=2, etc.
         for (const ep of tmdbEpisodes) {
-            // Usamos ep.episode_number que es el número relativo a la temporada
             const episodeNumberInSeason = ep.episode_number;
             const videoUrl = getVimeusUrl(tmdbId, esAnime, s, episodeNumberInSeason);
-            
             seasonEpisodes.push({
                 number: episodeNumberInSeason,
                 title: ep.name || `Episodio ${episodeNumberInSeason}`,
@@ -485,7 +501,6 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
             });
         }
         
-        // Ordenar por número de episodio dentro de la temporada
         seasonEpisodes.sort((a, b) => a.number - b.number);
         
         seasonsData.push({
@@ -570,18 +585,9 @@ async function loadStats() {
         const codes = await db.collection('codes').where('used', '==', false).get();
         const movies = await db.collection('movies').get();
         const series = await db.collection('series').get();
-        
-        document.getElementById('stats').innerHTML = `
-            <div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
+        document.getElementById('stats').innerHTML = `<div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
             <div class="stat-card"><h2>${codes.size}</h2><p>Códigos</p></div>
-            <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>
-        `;
-        
-        let recentHtml = '';
-        users.forEach(doc => {
-            recentHtml += `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">📧 ${doc.data().email}</div>`;
-        });
-        document.getElementById('recentUsers').innerHTML = recentHtml || 'No hay usuarios';
+            <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>`;
     } catch (error) { console.error(error); }
 }
 
@@ -638,7 +644,7 @@ async function loadSeries() {
                     <td style="padding:12px;"><span class="type-badge ${typeBadge}">${contentType}</span></td>
                     <td style="padding:12px;">📺 ${seasonsCount}</td>
                     <td style="padding:12px;">📋 ${episodesCount}</td>
-                    <td style="padding:12px;"><button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver</button>
+                    <td style="padding:12px;"><button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver/Editar</button>
                     <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
         
@@ -673,7 +679,7 @@ async function loadRadios() {
                     <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
                     <td style="padding:12px;"><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
-        document.getElementById('radiosTable').innerHTML = html || '</table><td colspan="4" style="padding:40px;text-align:center;">No hay radios</td></tr>';
+        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay radios</td></tr>';
     } catch (error) { console.error(error); }
 }
 
@@ -690,6 +696,239 @@ async function loadCodes() {
         document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3" style="padding:40px;text-align:center;">No hay códigos</td></tr>';
     } catch (error) { console.error(error); }
 }
+
+// ==================== GESTIÓN COMPLETA DE SERIES ====================
+async function saveSeriesData(docId, seasons, totalEpisodes, esAnime, tmdbId) {
+    await db.collection('series').doc(docId).update({
+        seasons: seasons,
+        totalSeasons: seasons.length,
+        totalEpisodes: totalEpisodes,
+        updatedAt: new Date()
+    });
+}
+
+// Agregar nueva temporada
+window.addNewSeason = async function(docId) {
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    const newSeasonNum = seasons.length + 1;
+    
+    seasons.push({
+        number: newSeasonNum,
+        title: `Temporada ${newSeasonNum}`,
+        episodes: []
+    });
+    
+    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+    await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+    showToast(`✅ Temporada ${newSeasonNum} agregada`);
+    viewSeriesDetails(docId);
+};
+
+// Eliminar temporada completa
+window.deleteSeason = async function(docId, seasonIndex) {
+    if (!confirm('¿Eliminar esta temporada y TODOS sus episodios? Esta acción no se puede deshacer.')) return;
+    
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    
+    seasons.splice(seasonIndex, 1);
+    // Renumerar temporadas
+    seasons.forEach((s, idx) => s.number = idx + 1);
+    
+    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+    await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+    showToast(`✅ Temporada eliminada`);
+    viewSeriesDetails(docId);
+};
+
+// Actualizar título de temporada
+window.updateSeasonTitle = async function(docId, seasonIndex, newTitle) {
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    
+    if (seasons[seasonIndex]) {
+        seasons[seasonIndex].title = newTitle;
+        const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+        await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+        showToast(`✅ Título actualizado`);
+    }
+};
+
+// Agregar nuevo episodio a temporada
+window.addNewEpisode = async function(docId, seasonIndex) {
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    
+    if (!seasons[seasonIndex]) return;
+    
+    const season = seasons[seasonIndex];
+    const newEpNum = (season.episodes?.length || 0) + 1;
+    const videoUrl = getVimeusUrl(data.tmdbId, data.isAnime, season.number, newEpNum);
+    
+    if (!season.episodes) season.episodes = [];
+    season.episodes.push({
+        number: newEpNum,
+        title: `Episodio ${newEpNum}`,
+        videoUrl: videoUrl
+    });
+    season.episodes.sort((a, b) => a.number - b.number);
+    
+    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+    await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+    showToast(`✅ Episodio ${season.number}x${newEpNum} agregado`);
+    viewSeriesDetails(docId);
+};
+
+// Actualizar episodio
+window.updateEpisode = async function(docId, seasonIndex, episodeIndex, newTitle, newNumber) {
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    
+    if (!seasons[seasonIndex] || !seasons[seasonIndex].episodes[episodeIndex]) return;
+    
+    const episode = seasons[seasonIndex].episodes[episodeIndex];
+    const oldNumber = episode.number;
+    const newNum = parseInt(newNumber);
+    
+    episode.title = newTitle;
+    
+    if (newNum !== oldNumber && !isNaN(newNum)) {
+        // Verificar si el nuevo número ya existe
+        const exists = seasons[seasonIndex].episodes.some(e => e.number === newNum && e !== episode);
+        if (exists) {
+            showToast('Ya existe un episodio con ese número', true);
+            viewSeriesDetails(docId);
+            return;
+        }
+        episode.number = newNum;
+        episode.videoUrl = getVimeusUrl(data.tmdbId, data.isAnime, seasons[seasonIndex].number, newNum);
+        seasons[seasonIndex].episodes.sort((a, b) => a.number - b.number);
+    }
+    
+    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+    await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+    showToast(`✅ Episodio actualizado`);
+    viewSeriesDetails(docId);
+};
+
+// Eliminar episodio
+window.deleteEpisode = async function(docId, seasonIndex, episodeIndex) {
+    if (!confirm('¿Eliminar este episodio?')) return;
+    
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    
+    if (!seasons[seasonIndex] || !seasons[seasonIndex].episodes[episodeIndex]) return;
+    
+    seasons[seasonIndex].episodes.splice(episodeIndex, 1);
+    // Renumerar episodios
+    seasons[seasonIndex].episodes.forEach((e, idx) => e.number = idx + 1);
+    
+    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+    await saveSeriesData(docId, seasons, totalEpisodes, data.isAnime, data.tmdbId);
+    showToast(`✅ Episodio eliminado`);
+    viewSeriesDetails(docId);
+};
+
+// ==================== VER DETALLES DE SERIE CON EDITORES ====================
+window.viewSeriesDetails = async (docId) => {
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const esAnime = data.isAnime || false;
+    
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h2>${esAnime ? '🎌' : '📺'} ${escapeHtml(data.title)} <span class="type-badge ${esAnime ? 'type-anime' : 'type-serie'}">${esAnime ? 'Anime' : 'Serie'}</span></h2>
+            <div class="action-buttons">
+                <button onclick="closeSeriesDetail()" style="background:#ef4444;">✕ Cerrar</button>
+            </div>
+        </div>
+        <div style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap;">
+            ${data.imageUrl ? `<img src="${data.imageUrl}" style="width:150px;border-radius:12px;">` : ''}
+            <div style="flex:1;">
+                <p><strong>Año:</strong> ${data.year || 'N/A'}</p>
+                <p><strong>Género:</strong> ${data.genres || 'N/A'}</p>
+                <p><strong>TMDB ID:</strong> ${data.tmdbId}</p>
+                <p><strong>Total Episodios:</strong> ${data.totalEpisodes || 0}</p>
+            </div>
+        </div>
+        <div class="test-video">
+            <p><strong>🎬 Vista previa (Primer episodio disponible):</strong></p>
+            <iframe src="${data.seasons?.[0]?.episodes?.[0]?.videoUrl || getVimeusUrl(data.tmdbId, esAnime, 1, 1)}" frameborder="0" allowfullscreen referrerpolicy="origin"></iframe>
+        </div>
+        <div class="seasons-container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                <h3>📋 Temporadas y Episodios</h3>
+                <button onclick="addNewSeason('${docId}')" class="success btn-small">➕ Nueva Temporada</button>
+            </div>
+    `;
+    
+    for (let sIdx = 0; sIdx < (data.seasons || []).length; sIdx++) {
+        const season = data.seasons[sIdx];
+        html += `
+            <div class="season-card">
+                <div class="season-header">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span style="font-weight:bold;">🎬 Temporada ${season.number}:</span>
+                        <input type="text" class="season-title-edit" value="${escapeHtml(season.title)}" 
+                               onchange="updateSeasonTitle('${docId}', ${sIdx}, this.value)" 
+                               placeholder="Título de temporada">
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="addNewEpisode('${docId}', ${sIdx})" class="info btn-small">➕ Episodio</button>
+                        <button onclick="deleteSeason('${docId}', ${sIdx})" class="danger btn-small">🗑️ Eliminar Temporada</button>
+                    </div>
+                </div>
+                <div class="episodes-list">
+                    <div style="margin-bottom:10px;"><strong>📋 Episodios:</strong></div>
+        `;
+        
+        if (!season.episodes || season.episodes.length === 0) {
+            html += `<p style="color:#94a3b8; margin-left:20px;">No hay episodios. Haz clic en "+ Episodio" para agregar.</p>`;
+        } else {
+            for (let eIdx = 0; eIdx < season.episodes.length; eIdx++) {
+                const ep = season.episodes[eIdx];
+                html += `
+                    <div class="episode-item">
+                        <div class="episode-info">
+                            <span class="episode-number">Ep ${ep.number}:</span>
+                            <input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" 
+                                   id="ep_title_${sIdx}_${eIdx}" style="width:200px;">
+                            <input type="number" class="episode-title-input" value="${ep.number}" 
+                                   id="ep_num_${sIdx}_${eIdx}" style="width:70px;" placeholder="#">
+                        </div>
+                        <div class="action-buttons">
+                            <button onclick="updateEpisode('${docId}', ${sIdx}, ${eIdx}, 
+                                document.getElementById('ep_title_${sIdx}_${eIdx}').value,
+                                document.getElementById('ep_num_${sIdx}_${eIdx}').value)" 
+                                class="warning btn-small">✏️ Guardar</button>
+                            <button onclick="window.open('${ep.videoUrl}', '_blank')" class="info btn-small">▶️ Ver</button>
+                            <button onclick="deleteEpisode('${docId}', ${sIdx}, ${eIdx})" class="danger btn-small">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        html += `</div></div>`;
+    }
+    
+    html += `</div>`;
+    
+    document.getElementById('seriesDetailContent').innerHTML = html;
+    document.getElementById('seriesDetailModal').style.display = 'flex';
+};
+
+window.closeSeriesDetail = () => {
+    document.getElementById('seriesDetailModal').style.display = 'none';
+};
 
 // ==================== AGREGAR MANUAL ====================
 function openAddModal(type) {
@@ -743,7 +982,6 @@ function openAddModal(type) {
         const preview = document.getElementById('imagePreview');
         if (img && preview) img.oninput = () => { if(img.value) preview.style.backgroundImage = `url('${img.value}')`; else preview.style.backgroundImage = ''; };
     }
-    
     modal.style.display = 'flex';
 }
 
@@ -810,90 +1048,6 @@ function closeModal() {
     currentEditId = null;
 }
 
-// ==================== VER DETALLES DE SERIE ====================
-window.viewSeriesDetails = async (docId) => {
-    const doc = await db.collection('series').doc(docId).get();
-    const data = doc.data();
-    const esAnime = data.isAnime || false;
-    
-    let html = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h2>${esAnime ? '🎌' : '📺'} ${escapeHtml(data.title)} <span class="type-badge ${esAnime ? 'type-anime' : 'type-serie'}">${esAnime ? 'Anime' : 'Serie'}</span></h2>
-            <button onclick="closeSeriesDetail()" style="background:#ef4444;">✕ Cerrar</button>
-        </div>
-        <div style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap;">
-            ${data.imageUrl ? `<img src="${data.imageUrl}" style="width:150px;border-radius:12px;">` : ''}
-            <div style="flex:1;"><p><strong>Año:</strong> ${data.year || 'N/A'}</p>
-            <p><strong>Género:</strong> ${data.genres || 'N/A'}</p>
-            <p><strong>TMDB ID:</strong> ${data.tmdbId}</p>
-            <p><strong>Total Episodios:</strong> ${data.totalEpisodes || 0}</p></div>
-        </div>
-        <div class="test-video"><p><strong>🎬 Vista previa (Episodio 1x1):</strong></p>
-        <iframe src="${getVimeusUrl(data.tmdbId, esAnime, 1, 1)}" frameborder="0" allowfullscreen referrerpolicy="origin"></iframe></div>
-        <div class="seasons-container"><h3>📋 Temporadas y Episodios</h3>`;
-    
-    for (const season of (data.seasons || [])) {
-        html += `<div class="season-card"><div class="season-header"><h4>🎬 Temporada ${season.number}: ${escapeHtml(season.title)}</h4></div><div class="episodes-list">`;
-        if (!season.episodes || season.episodes.length === 0) {
-            html += `<p style="color:#94a3b8;">Sin episodios</p>`;
-        } else {
-            for (const ep of season.episodes) {
-                html += `<div class="episode-item"><div class="episode-info"><span class="episode-number">Ep ${ep.number}</span>
-                        <span class="episode-title">${escapeHtml(ep.title)}</span></div>
-                        <button onclick="window.open('${getVimeusUrl(data.tmdbId, esAnime, season.number, ep.number)}', '_blank')" class="btn-small" style="background:#3b82f6;">▶️ Ver</button></div>`;
-            }
-        }
-        html += `</div></div>`;
-    }
-    
-    html += `<div class="manual-add-section" style="background:rgba(0,0,0,0.3);border-radius:16px;padding:20px;margin-top:20px;">
-        <h4>✏️ Agregar Episodio Manualmente</h4>
-        <div class="episode-input-row" style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
-            <input type="number" id="newSeasonNum" placeholder="Temporada" style="width:100px;margin:0;">
-            <input type="number" id="newEpisodeNum" placeholder="Episodio" style="width:100px;margin:0;">
-            <input type="text" id="newEpisodeTitle" placeholder="Título" style="flex:1;margin:0;">
-            <button onclick="addEpisodeManually('${docId}')" class="success">➕ Agregar</button>
-        </div>
-        <p style="font-size:12px;color:#94a3b8;">La URL se genera como: ...?tmdb=${data.tmdbId}&se={temporada}&ep={episodio}</p>
-    </div></div>`;
-    
-    document.getElementById('seriesDetailContent').innerHTML = html;
-    document.getElementById('seriesDetailModal').style.display = 'flex';
-};
-
-window.closeSeriesDetail = () => { document.getElementById('seriesDetailModal').style.display = 'none'; };
-
-window.addEpisodeManually = async (docId) => {
-    const seasonNum = parseInt(document.getElementById('newSeasonNum')?.value);
-    const episodeNum = parseInt(document.getElementById('newEpisodeNum')?.value);
-    const episodeTitle = document.getElementById('newEpisodeTitle')?.value;
-    if (!seasonNum || !episodeNum || !episodeTitle) { showToast('Completa todos los campos', true); return; }
-    
-    const doc = await db.collection('series').doc(docId).get();
-    const data = doc.data();
-    const esAnime = data.isAnime || false;
-    const seasons = data.seasons || [];
-    
-    let season = seasons.find(s => s.number === seasonNum);
-    if (!season) {
-        season = { number: seasonNum, title: `Temporada ${seasonNum}`, episodes: [] };
-        seasons.push(season);
-        seasons.sort((a, b) => a.number - b.number);
-    }
-    if (season.episodes.some(e => e.number === episodeNum)) { showToast('Este episodio ya existe', true); return; }
-    
-    const videoUrl = getVimeusUrl(data.tmdbId, esAnime, seasonNum, episodeNum);
-    season.episodes.push({ number: episodeNum, title: episodeTitle, videoUrl: videoUrl });
-    season.episodes.sort((a, b) => a.number - b.number);
-    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-    await db.collection('series').doc(docId).update({ seasons: seasons, totalEpisodes: totalEpisodes, updatedAt: new Date() });
-    showToast(`✅ Episodio ${seasonNum}x${episodeNum} agregado`);
-    document.getElementById('newSeasonNum').value = '';
-    document.getElementById('newEpisodeNum').value = '';
-    document.getElementById('newEpisodeTitle').value = '';
-    viewSeriesDetails(docId);
-};
-
 // ==================== IMPORTACIÓN UI ====================
 window.searchSeriesAndShow = async function() {
     const query = document.getElementById('searchSerieInput').value.trim();
@@ -916,7 +1070,7 @@ window.searchSeriesAndShow = async function() {
             ${poster ? `<img src="${poster}" style="width:60px;height:90px;object-fit:cover;border-radius:8px;">` : '<div style="width:60px;height:90px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">📺</div>'}
             <div style="flex:1"><strong>${escapeHtml(title)}</strong><div style="font-size:12px; color:#94a3b8;">${year} • TMDB ID: ${serie.id}</div>
             <div><span style="background:${tipoColor}; padding:2px 8px; border-radius:12px; font-size:10px;">${tipoTexto}</span></div>
-            <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente (T1Ep1, T2Ep1, etc.)</div></div>
+            <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente todas las temporadas y episodios</div></div>
             <button style="background:#10b981; padding:8px 20px;">Importar</button></div>`;
     }
     html += '</div>';
@@ -1030,11 +1184,13 @@ async function isAdmin(email) {
     return email === 'admin@streamhub.com';
 }
 
-console.log('✅ Panel CORREGIDO');
-console.log('📌 Cambio importante: Ahora cada temporada tiene sus propios números de episodio');
-console.log('   - Temporada 1: ep=1,2,3...');
-console.log('   - Temporada 2: ep=1,2,3...');
-console.log('   - URL: ...?tmdb=ID&se=1&ep=1 (correcto para Vimeus)');
+console.log('✅ Panel con gestión completa');
+console.log('📌 Funcionalidades:');
+console.log('   - ✅ Agregar/Editar/Eliminar Temporadas');
+console.log('   - ✅ Agregar/Editar/Eliminar Episodios');
+console.log('   - ✅ Editar títulos en línea');
+console.log('   - ✅ Renumeración automática');
+console.log('   - ✅ URLs de Vimeus generadas automáticamente');
 </script>
 </body>
 </html>
