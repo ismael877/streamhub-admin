@@ -24,26 +24,24 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        input, textarea {
+        input, button {
             padding: 12px 20px;
             border-radius: 40px;
             border: none;
-            font-size: 14px;
-            width: 100%;
-            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        input {
             background: rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.2);
             color: white;
+            width: 100%;
+            margin-bottom: 12px;
         }
-        textarea { border-radius: 20px; resize: vertical; }
         button {
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
             color: white;
             cursor: pointer;
             font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 40px;
-            border: none;
         }
         button.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
         button.success { background: linear-gradient(90deg, #10b981, #059669); }
@@ -58,38 +56,6 @@
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
         .stat-card { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; text-align: center; }
         .stat-card h2 { font-size: 2rem; color: #c084fc; }
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: #1e293b;
-            border-radius: 24px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: #94a3b8; }
-        .image-preview {
-            width: 100%;
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 16px;
-            margin-bottom: 10px;
-            background-color: #0f172a;
-        }
     </style>
 </head>
 <body>
@@ -101,12 +67,12 @@
         <input type="password" id="password" placeholder="Contraseña">
         <button id="loginBtn" style="width: 100%;">Iniciar sesión</button>
         <button id="guestBtn" style="width: 100%; margin-top: 10px; background: #f59e0b;">🎭 Modo Invitado</button>
-        <p id="loginError" style="color: #ef4444; margin-top: 10px; display: none;"></p>
+        <p id="loginError" style="color: #ef4444; margin-top: 10px; display: none;">Error de conexión</p>
     </div>
 
-    <!-- Panel Principal (oculto hasta login) -->
+    <!-- Panel Principal -->
     <div id="adminPanel" class="hidden">
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
             <h1>🎬 StreamHub Admin</h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
@@ -118,7 +84,6 @@
             <button onclick="showSection('series')">📺 Series</button>
             <button onclick="showSection('music')">🎵 Música</button>
             <button onclick="showSection('radios')">📻 Radios</button>
-            <button onclick="showSection('musicVideos')">🎤 Videos Musicales</button>
             <button onclick="showSection('codes')">🔑 Códigos</button>
         </div>
 
@@ -134,37 +99,35 @@
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></td></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
         </div>
 
         <!-- Películas -->
         <div id="moviesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
+            <h2>🎬 Películas</h2>
+            <button id="addMovie" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Género</th><th>Año</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
         </div>
 
         <!-- Series -->
         <div id="seriesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📺 Series</h2><button id="addSerieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
+            <h2>📺 Series</h2>
+            <button id="addSerie" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Género</th><th>Temporadas</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
         </div>
 
         <!-- Música -->
         <div id="musicSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <h2>🎵 Música</h2>
+            <button id="addMusic" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Álbum</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
         </div>
 
         <!-- Radios -->
         <div id="radiosSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL Stream</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
-        </div>
-
-        <!-- Videos Musicales -->
-        <div id="musicVideosSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
+            <h2>📻 Radios</h2>
+            <button id="addRadio" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>País</th><th>Género</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <!-- Códigos -->
@@ -172,18 +135,6 @@
             <h2>🔑 Códigos de invitación</h2>
             <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
             <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para agregar/editar contenido (inicia oculto) -->
-<div id="contentModal" class="modal hidden">
-    <div class="modal-content">
-        <h3 id="modalTitle">Agregar Contenido</h3>
-        <div id="modalFields"></div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="saveContentBtn">💾 Guardar</button>
-            <button id="closeModalBtn">Cancelar</button>
         </div>
     </div>
 </div>
@@ -206,7 +157,6 @@ const db = firebase.firestore();
 let currentUser = null;
 let currentSection = 'dashboard';
 let isGuest = false;
-let editingItem = null;
 
 // Verificar si es admin
 async function isAdmin(email) {
@@ -249,7 +199,8 @@ async function loadUsers() {
             <td>${u.email}</td>
             <td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
             <td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-            <td><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})" style="padding:5px 10px;">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+            <td>
+                <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})" style="padding:5px 10px;">${u.active !== false ? 'Suspender' : 'Activar'}</button>
                 <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="padding:5px 10px; background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
             </td>
         </tr>`;
@@ -257,33 +208,53 @@ async function loadUsers() {
     document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
 }
 
-// Función genérica para cargar contenido
-async function loadCollection(collectionName, tableId, fields) {
-    const snapshot = await db.collection(collectionName).get();
+// Cargar películas
+async function loadMovies() {
+    const snapshot = await db.collection('movies').get();
     let html = '';
     snapshot.forEach(doc => {
-        const data = doc.data();
-        html += '</table>';
-        fields.forEach(field => {
-            let value = data[field.key] || '';
-            if (field.type === 'image' && value) {
-                value = `<img src="${value}" style="width: 40px; height: 60px; object-fit: cover; border-radius: 8px;">`;
-            } else if (field.type === 'url' && value) {
-                value = value.length > 40 ? value.substring(0, 40) + '...' : value;
-            }
-            html += `<td>${value || '—'}</td>`;
-        });
-        html += `<td><button onclick="editItem('${collectionName}', '${doc.id}')" style="padding:5px 10px; background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('${collectionName}', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button> </tr>`;
+        const m = doc.data();
+        html += `<tr><td>${m.title || ''}</td><td>${m.genre || ''}</td><td>${m.year || ''}</td>
+        <td><button onclick="deleteItem('movies', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
     });
-    document.getElementById(tableId).innerHTML = html || `<tr><td colspan="${fields.length + 1}">No hay contenido</td></tr>`;
+    document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4">No hay películas</td></tr>';
 }
 
-function loadMovies() { loadCollection('movies', 'moviesTable', [{key:'title'},{key:'imageUrl',type:'image'},{key:'videoUrl',type:'url'}]); }
-function loadSeries() { loadCollection('series', 'seriesTable', [{key:'title'},{key:'imageUrl',type:'image'},{key:'videoUrl',type:'url'}]); }
-function loadMusic() { loadCollection('music', 'musicTable', [{key:'title'},{key:'artist'},{key:'imageUrl',type:'image'},{key:'audioUrl',type:'url'}]); }
-function loadRadios() { loadCollection('radios', 'radiosTable', [{key:'name'},{key:'imageUrl',type:'image'},{key:'streamUrl',type:'url'}]); }
-function loadMusicVideos() { loadCollection('musicVideos', 'musicVideosTable', [{key:'title'},{key:'artist'},{key:'imageUrl',type:'image'},{key:'videoUrl',type:'url'}]); }
+// Cargar series
+async function loadSeries() {
+    const snapshot = await db.collection('series').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const s = doc.data();
+        html += `<tr><td>${s.title || ''}</td><td>${s.genre || ''}</td><td>${s.seasons || 0}</td>
+        <td><button onclick="deleteItem('series', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
+    });
+    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="4">No hay series</td></tr>';
+}
+
+// Cargar música
+async function loadMusic() {
+    const snapshot = await db.collection('music').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const m = doc.data();
+        html += `<tr><td>${m.title || ''}</td><td>${m.artist || ''}</td><td>${m.album || ''}</td>
+        <td><button onclick="deleteItem('music', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
+    });
+    document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="4">No hay música</td></tr>';
+}
+
+// Cargar radios
+async function loadRadios() {
+    const snapshot = await db.collection('radios').get();
+    let html = '';
+    snapshot.forEach(doc => {
+        const r = doc.data();
+        html += `<tr><td>${r.name || ''}</td><td>${r.country || ''}</td><td>${r.genre || ''}</td>
+        <td><button onclick="deleteItem('radios', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
+    });
+    document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
+}
 
 // Cargar códigos
 async function loadCodes() {
@@ -291,181 +262,36 @@ async function loadCodes() {
     let html = '';
     snapshot.forEach(doc => {
         const c = doc.data();
-        html += `<tr>
-            <td><code>${doc.id}</code></td>
-            <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-            <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
+        html += `<tr><td><code>${doc.id}</code></td>
+        <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
+        <td><button onclick="deleteCode('${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
     });
     document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
 }
 
-// Editar item
-window.editItem = async (type, id) => {
-    if (isGuest) { alert('Modo invitado: no se pueden editar'); return; }
-    const doc = await db.collection(type).doc(id).get();
-    if (doc.exists) {
-        editingItem = { type, id };
-        showModal(type, doc.data());
-    }
-};
-
-// Mostrar modal
-function showModal(type, data = {}) {
-    const modal = document.getElementById('contentModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalFields = document.getElementById('modalFields');
-    
-    let fieldsHtml = '';
-    
-    if (type === 'movies') {
-        modalTitle.innerText = '🎬 Película';
-        fieldsHtml = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-            <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}');` : ''}"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
-        `;
-    } else if (type === 'series') {
-        modalTitle.innerText = '📺 Serie';
-        fieldsHtml = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-            <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}');` : ''}"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-            <div class="form-group"><label>Temporadas</label><input id="edit_seasons" value="${escapeHtml(data.seasons || '')}"></div>
-        `;
-    } else if (type === 'music') {
-        modalTitle.innerText = '🎵 Canción';
-        fieldsHtml = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-            <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}');` : ''}"></div>
-            <div class="form-group"><label>URL Audio</label><input id="edit_audioUrl" value="${escapeHtml(data.audioUrl || data.videoUrl || '')}"></div>
-        `;
-    } else if (type === 'radios') {
-        modalTitle.innerText = '📻 Radio';
-        fieldsHtml = `
-            <div class="form-group"><label>Nombre *</label><input id="edit_name" value="${escapeHtml(data.name || '')}"></div>
-            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" value="${escapeHtml(data.streamUrl || '')}"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-            <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}');` : ''}"></div>
-            <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}"></div>
-        `;
-    } else if (type === 'musicVideos') {
-        modalTitle.innerText = '🎤 Video Musical';
-        fieldsHtml = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-            <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}');` : ''}"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-        `;
-    }
-    
-    modalFields.innerHTML = fieldsHtml;
-    
-    const imageInput = document.getElementById('edit_imageUrl');
-    if (imageInput) {
-        imageInput.oninput = () => {
-            const preview = document.getElementById('imagePreview');
-            if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-            else preview.style.backgroundImage = 'none';
-        };
-    }
-    
-    modal.classList.remove('hidden');
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-// Guardar contenido
-async function saveContent() {
-    if (!editingItem) return;
-    if (isGuest) { alert('Modo invitado: no se pueden guardar cambios'); closeModal(); return; }
-    
-    const { type, id } = editingItem;
-    const updateData = {};
-    
-    if (type === 'movies') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-    } else if (type === 'series') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        if (document.getElementById('edit_seasons')?.value) updateData.seasons = document.getElementById('edit_seasons').value;
-    } else if (type === 'music') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
-    } else if (type === 'radios') {
-        if (document.getElementById('edit_name')?.value) updateData.name = document.getElementById('edit_name').value;
-        if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
-    } else if (type === 'musicVideos') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-    }
-    
-    updateData.updatedAt = new Date();
-    
-    await db.collection(type).doc(id).set(updateData, { merge: true });
-    alert('✅ Guardado correctamente');
-    closeModal();
-    refreshCurrentSection();
-}
-
-function closeModal() {
-    document.getElementById('contentModal').classList.add('hidden');
-    editingItem = null;
-}
-
-function addNewContent(type) {
-    if (isGuest) { alert('Modo invitado: no se puede agregar'); return; }
-    editingItem = { type, id: db.collection(type).doc().id };
-    showModal(type, {});
-}
-
 // Acciones
 window.toggleUserStatus = async (uid, isActive) => {
-    if (isGuest) { alert('Modo invitado'); return; }
+    if (isGuest) { alert('Modo invitado: no se pueden hacer cambios'); return; }
     await db.collection('users').doc(uid).update({ active: !isActive });
     loadUsers(); loadStats();
 };
 
 window.toggleUserHost = async (uid, isHost) => {
-    if (isGuest) { alert('Modo invitado'); return; }
+    if (isGuest) { alert('Modo invitado: no se pueden hacer cambios'); return; }
     await db.collection('users').doc(uid).update({ isHost: !isHost });
     loadUsers(); loadStats();
 };
 
 window.deleteItem = async (type, id) => {
-    if (isGuest) { alert('Modo invitado'); return; }
-    if (confirm('¿Eliminar permanentemente este contenido?')) {
+    if (isGuest) { alert('Modo invitado: no se pueden eliminar'); return; }
+    if (confirm('¿Eliminar permanentemente?')) {
         await db.collection(type).doc(id).delete();
         refreshCurrentSection();
     }
 };
 
 window.deleteCode = async (codeId) => {
-    if (isGuest) { alert('Modo invitado'); return; }
+    if (isGuest) { alert('Modo invitado: no se pueden eliminar'); return; }
     if (confirm('¿Eliminar este código?')) {
         await db.collection('codes').doc(codeId).delete();
         loadCodes(); loadStats();
@@ -478,7 +304,6 @@ function refreshCurrentSection() {
     else if (currentSection === 'series') loadSeries();
     else if (currentSection === 'music') loadMusic();
     else if (currentSection === 'radios') loadRadios();
-    else if (currentSection === 'musicVideos') loadMusicVideos();
     else if (currentSection === 'codes') loadCodes();
     else if (currentSection === 'dashboard') loadStats();
 }
@@ -493,22 +318,40 @@ window.showSection = (section) => {
         'series': 'seriesSection',
         'music': 'musicSection',
         'radios': 'radiosSection',
-        'musicVideos': 'musicVideosSection',
         'codes': 'codesSection'
     };
     document.getElementById(sections[section]).classList.remove('hidden');
     refreshCurrentSection();
 };
 
+// Generar código
 async function generateNewCode() {
-    if (isGuest) { alert('Modo invitado'); return; }
+    if (isGuest) { alert('Modo invitado: no se pueden generar códigos'); return; }
     const codeId = 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    await db.collection('codes').doc(codeId).set({ ownerId: 'admin', used: false, createdAt: new Date() });
+    await db.collection('codes').doc(codeId).set({
+        ownerId: 'admin',
+        used: false,
+        createdAt: new Date()
+    });
     alert(`✅ Código generado: ${codeId}`);
     loadCodes(); loadStats();
 }
 
-// Event Listeners
+// Agregar contenido simple
+function addSimpleContent(type) {
+    if (isGuest) { alert('Modo invitado: no se puede agregar'); return; }
+    const title = prompt('Título:');
+    if (!title) return;
+    const newId = db.collection(type).doc().id;
+    const data = { title: title };
+    if (type === 'movies') data.genre = 'General', data.year = '2024';
+    if (type === 'series') data.genre = 'General', data.seasons = 1;
+    if (type === 'music') data.artist = 'Desconocido', data.album = 'Single';
+    if (type === 'radios') data.country = 'Internacional', data.genre = 'General';
+    db.collection(type).doc(newId).set(data).then(() => refreshCurrentSection());
+}
+
+// Login
 document.getElementById('loginBtn').onclick = async () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -546,15 +389,11 @@ document.getElementById('logoutBtn').onclick = async () => {
 };
 
 document.getElementById('refreshUsers').onclick = loadUsers;
-document.getElementById('addMovieBtn').onclick = () => addNewContent('movies');
-document.getElementById('addSerieBtn').onclick = () => addNewContent('series');
-document.getElementById('addMusicBtn').onclick = () => addNewContent('music');
-document.getElementById('addRadioBtn').onclick = () => addNewContent('radios');
-document.getElementById('addMusicVideoBtn').onclick = () => addNewContent('musicVideos');
+document.getElementById('addMovie').onclick = () => addSimpleContent('movies');
+document.getElementById('addSerie').onclick = () => addSimpleContent('series');
+document.getElementById('addMusic').onclick = () => addSimpleContent('music');
+document.getElementById('addRadio').onclick = () => addSimpleContent('radios');
 document.getElementById('generateCode').onclick = generateNewCode;
-
-document.getElementById('saveContentBtn').onclick = saveContent;
-document.getElementById('closeModalBtn').onclick = closeModal;
 
 // Inicializar configuración admin
 db.collection('admin').doc('config').get().then(doc => {
@@ -562,7 +401,7 @@ db.collection('admin').doc('config').get().then(doc => {
 });
 
 // Crear colecciones si no existen
-['movies', 'series', 'music', 'radios', 'musicVideos', 'codes', 'users'].forEach(col => {
+['movies', 'series', 'music', 'radios', 'codes', 'users'].forEach(col => {
     db.collection(col).limit(1).get();
 });
 </script>
