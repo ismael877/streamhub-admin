@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Con TMDB</title>
+    <title>StreamHub Admin - Con Vimeus (Versión Funcional)</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
         body {
@@ -35,7 +36,6 @@
             border: 1px solid rgba(255,255,255,0.2);
             color: white;
         }
-        textarea { border-radius: 20px; resize: vertical; }
         button {
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
             color: white;
@@ -78,7 +78,7 @@
             background: #1e293b;
             border-radius: 24px;
             padding: 30px;
-            max-width: 900px;
+            max-width: 600px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
@@ -113,62 +113,114 @@
         }
         .search-result-item:hover { background: #334155; }
         .loading-text { text-align: center; padding: 20px; color: #94a3b8; }
-        
-        .seasons-container {
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 20px;
-        }
-        .seasons-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #c084fc;
-        }
-        .season-card {
-            background: rgba(0,0,0,0.4);
+        .vimeus-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 4px 12px;
             border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 12px;
+            display: inline-block;
+            margin-left: 10px;
         }
-        .season-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        .vimeus-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
         }
-        .season-number-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #c084fc;
-        }
-        .season-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .btn-icon { padding: 6px 12px; font-size: 0.75rem; }
-        .episodes-list { margin-left: 20px; margin-top: 15px; }
-        .episode-item {
+        .vimeus-card-item {
             background: rgba(255,255,255,0.05);
-            border-radius: 16px;
-            padding: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .vimeus-card-item:hover {
+            transform: translateY(-5px);
+        }
+        .vimeus-card-poster {
+            position: relative;
+            width: 100%;
+            padding-top: 150%;
+            background: rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .vimeus-card-poster img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .vimeus-card-content {
+            padding: 12px;
+        }
+        .vimeus-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .vimeus-card-meta {
+            font-size: 11px;
+            color: #94a3b8;
             margin-bottom: 10px;
         }
-        .episode-header {
+        .vimeus-card-actions {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
         }
-        .add-episode-btn { margin-top: 10px; width: 100%; }
-        .add-season-btn { margin-top: 15px; width: 100%; background: linear-gradient(90deg, #10b981, #059669); }
+        .vimeus-card-actions button {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+        }
+        .vimeus-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .vimeus-tab {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .vimeus-tab.active {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        }
+        .vimeus-search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .vimeus-search-box input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        .vimeus-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -186,7 +238,7 @@
     <!-- Panel Principal -->
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1>🎬 StreamHub Admin</h1>
+            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Powered by Vimeus</span></h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
 
@@ -195,9 +247,6 @@
             <button onclick="showSection('users')">👥 Usuarios</button>
             <button onclick="showSection('movies')">🎬 Películas</button>
             <button onclick="showSection('series')">📺 Series</button>
-            <button onclick="showSection('music')">🎵 Música</button>
-            <button onclick="showSection('radios')">📻 Radios</button>
-            <button onclick="showSection('musicVideos')">🎤 Videos Musicales</button>
             <button onclick="showSection('codes')">🔑 Códigos</button>
         </div>
 
@@ -214,8 +263,8 @@
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
             <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Email</th><th style="padding:12px;">Rol</th><th style="padding:12px;">Estado</th><th style="padding:12px;">Acciones</th></tr></thead>
+                <table>
+                    <thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody id="usersTable"></tbody>
                 </table>
             </div>
@@ -223,52 +272,20 @@
 
         <!-- Películas -->
         <div id="moviesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Título</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr></thead>
-                    <tbody id="moviesTable"></tbody>
-                </table>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h2>🎬 Películas</h2>
+                <button id="addMovieBtn" class="success">➕ Importar de Vimeus</button>
             </div>
+            <div id="moviesList"></div>
         </div>
 
         <!-- Series -->
         <div id="seriesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📺 Series</h2><button id="addSerieBtn" class="success">➕ Agregar</button></div>
-            <div id="seriesList" style="margin-top: 20px;"></div>
-        </div>
-
-        <!-- Música -->
-        <div id="musicSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Título</th><th style="padding:12px;">Artista</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr></thead>
-                    <tbody id="musicTable"></tbody>
-                </table>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h2>📺 Series</h2>
+                <button id="addSerieBtn" class="success">➕ Importar de Vimeus</button>
             </div>
-        </div>
-
-        <!-- Radios -->
-        <div id="radiosSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Nombre</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr></thead>
-                    <tbody id="radiosTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Videos Musicales -->
-        <div id="musicVideosSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Título</th><th style="padding:12px;">Artista</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr></thead>
-                    <tbody id="musicVideosTable"></tbody>
-                </table>
-            </div>
+            <div id="seriesList"></div>
         </div>
 
         <!-- Códigos -->
@@ -276,8 +293,8 @@
             <h2>🔑 Códigos de invitación</h2>
             <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
             <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Código</th><th style="padding:12px;">Estado</th><th style="padding:12px;">Acciones</th></tr></thead>
+                <table>
+                    <thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody id="codesTable"></tbody>
                 </table>
             </div>
@@ -285,13 +302,16 @@
     </div>
 </div>
 
-<!-- Modal para agregar/editar contenido -->
-<div id="contentModal" class="modal">
+<!-- Modal para importar contenido -->
+<div id="importModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle">Agregar Contenido</h3>
-        <div id="modalFields"></div>
+        <h3 id="modalTitle">Importar de Vimeus</h3>
+        <div class="vimeus-search-box">
+            <input type="text" id="searchInput" placeholder="Buscar... (ej: Fight Club, Game of Thrones)">
+            <button id="searchBtn" class="info">Buscar</button>
+        </div>
+        <div id="searchResults" style="max-height: 400px; overflow-y: auto;"></div>
         <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="saveContentBtn" class="success">💾 Guardar</button>
             <button id="closeModalBtn">Cancelar</button>
         </div>
     </div>
@@ -315,60 +335,75 @@ const db = firebase.firestore();
 let currentUser = null;
 let currentSection = 'dashboard';
 let isGuest = false;
-let currentEditType = null;
-let currentEditId = null;
+let currentImportType = null;
 
-// Configuración TMDB
-const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
+// ==================== CONFIGURACIÓN DE VIMEUS ====================
+const VIMEUS_API_KEY = "ak_aqxyOEsSQGl2kadq0QYzO2jTVCUaVV8J";
+const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
-const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
 
-// ==================== FUNCIONES TMDB ====================
-async function searchTMDB(query, type) {
-    const searchType = type === 'movies' ? 'movie' : 'tv';
-    const url = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
+// ==================== FUNCIONES DE VIMEUS API ====================
+async function fetchVimeusListings(type, page = 1, query = '') {
+    const endpoints = {
+        movies: 'https://vimeus.com/api/listing/movies',
+        series: 'https://vimeus.com/api/listing/series'
+    };
+    
+    const url = new URL(endpoints[type]);
+    url.searchParams.append('page', page);
+    
+    console.log(`🔍 Fetching ${type} from Vimeus:`, url.toString());
+    
     try {
-        const response = await fetch(url);
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'X-API-Key': VIMEUS_API_KEY,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         const data = await response.json();
-        return data.results || [];
+        console.log(`📦 Received ${type} data:`, data);
+        
+        if (data.error === false && data.data) {
+            let items = type === 'movies' ? data.data.movies : data.data.series;
+            
+            if (query) {
+                items = items.filter(item => 
+                    item.title && item.title.toLowerCase().includes(query.toLowerCase())
+                );
+            }
+            
+            return {
+                items: items,
+                currentPage: page,
+                totalPages: data.data.pagination?.total_pages || 1,
+                hasNext: data.data.pagination?.has_next || false
+            };
+        }
+        
+        return { items: [], currentPage: 1, totalPages: 1, hasNext: false };
+        
     } catch (error) {
-        console.error('Error buscando en TMDB:', error);
-        return [];
+        console.error('❌ Error fetching from Vimeus:', error);
+        showToast('Error de conexión con Vimeus', 'error');
+        return { items: [], currentPage: 1, totalPages: 1, hasNext: false };
     }
 }
 
-async function getTMDBDetails(type, id) {
-    const searchType = type === 'movies' ? 'movie' : 'tv';
-    const url = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=es`;
-    try {
-        const response = await fetch(url);
-        return await response.json();
-    } catch (error) {
-        console.error('Error obteniendo detalles de TMDB:', error);
-        return null;
-    }
-}
-
-function fillFormWithTMDBData(type, data) {
-    const title = data.title || data.name;
-    const year = (data.release_date || data.first_air_date || '').substring(0,4);
-    const posterPath = data.poster_path ? `${TMDB_IMAGE_BASE}${data.poster_path}` : '';
-    const backdropPath = data.backdrop_path ? `${TMDB_BACKDROP_BASE}${data.backdrop_path}` : '';
-    const overview = data.overview || '';
-    const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
+function getEmbedUrl(type, tmdbId, season = null, episode = null) {
+    let url = `https://vimeus.com/e/${type}?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
     
-    if (document.getElementById('edit_title')) document.getElementById('edit_title').value = title;
-    if (document.getElementById('edit_imageUrl')) document.getElementById('edit_imageUrl').value = posterPath;
-    if (document.getElementById('edit_backdropUrl')) document.getElementById('edit_backdropUrl').value = backdropPath;
-    if (document.getElementById('edit_year')) document.getElementById('edit_year').value = year;
-    if (document.getElementById('edit_genre')) document.getElementById('edit_genre').value = genres;
-    if (document.getElementById('edit_overview')) document.getElementById('edit_overview').value = overview;
-    
-    const preview = document.getElementById('imagePreview');
-    if (preview && posterPath) {
-        preview.style.backgroundImage = `url('${posterPath}')`;
-        preview.style.backgroundSize = 'cover';
+    if ((type === 'serie' || type === 'anime') && season && episode) {
+        url += `&se=${season}&ep=${episode}`;
     }
+    
+    return url;
 }
 
 // ==================== FUNCIONES DE AUTENTICACIÓN ====================
@@ -388,18 +423,25 @@ function escapeHtml(text) {
     });
 }
 
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.background = type === 'error' ? '#ef4444' : '#10b981';
+    toast.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
 // ==================== FUNCIONES DE CARGA ====================
 async function loadStats() {
     try {
         const users = await db.collection('users').get();
-        const hosts = await db.collection('users').where('isHost', '==', true).get();
         const codes = await db.collection('codes').where('used', '==', false).get();
         const movies = await db.collection('movies').get();
         const series = await db.collection('series').get();
         
         document.getElementById('stats').innerHTML = `
             <div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
-            <div class="stat-card"><h2>${hosts.size}</h2><p>Anfitriones</p></div>
             <div class="stat-card"><h2>${codes.size}</h2><p>Códigos</p></div>
             <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>
         `;
@@ -418,180 +460,102 @@ async function loadStats() {
 
 async function loadUsers() {
     const container = document.getElementById('usersTable');
-    if (!container) return;
-    
     try {
         const users = await db.collection('users').get();
         if (users.size === 0) {
-            container.innerHTML = '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay usuarios registrados</td></tr>';
+            container.innerHTML = '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay usuarios</td></tr>';
             return;
         }
         
         let html = '';
         users.forEach(doc => {
             const u = doc.data();
-            const email = u.email || 'Sin email';
-            const role = u.isHost ? 'Anfitrión' : 'Cliente';
-            const roleColor = u.isHost ? '#8b5cf6' : '#3b82f6';
-            const status = u.active !== false ? 'Activo' : 'Suspendido';
-            const statusClass = u.active !== false ? 'badge-active' : 'badge-inactive';
-            
             html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding:12px;">${escapeHtml(email)}</td>
-                    <td style="padding:12px;"><span class="badge" style="background:${roleColor}">${role}</span></td>
-                    <td style="padding:12px;"><span class="badge ${statusClass}">${status}</span></td>
+                <tr>
+                    <td style="padding:12px;">${escapeHtml(u.email || 'Sin email')}</td>
+                    <td style="padding:12px;"><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
+                    <td style="padding:12px;"><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
                     <td style="padding:12px;">
-                        <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})" style="padding:5px 10px;">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                        <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800; padding:5px 10px;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
+                        <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
                     </td>
                 </tr>
             `;
         });
         container.innerHTML = html;
     } catch (error) {
-        console.error('Error loading users:', error);
-        container.innerHTML = '<tr><td colspan="4" style="padding:40px; text-align:center; color:#ef4444;">Error al cargar usuarios</td></tr>';
+        console.error(error);
     }
 }
 
 async function loadMovies() {
+    const container = document.getElementById('moviesList');
     try {
         const snapshot = await db.collection('movies').get();
-        let html = '';
+        
+        if (snapshot.size === 0) {
+            container.innerHTML = '<div class="loading-text">📭 No hay películas. Haz clic en "Importar de Vimeus" para empezar.</div>';
+            return;
+        }
+        
+        let html = '<div class="vimeus-grid">';
         snapshot.forEach(doc => {
             const data = doc.data();
             html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding:12px;">${escapeHtml(data.title || '—')}</td>
-                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-                    <td style="padding:12px;">
-                        <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                        <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
-                    </td>
-                </tr>
+                <div class="vimeus-card-item">
+                    <div class="vimeus-card-poster">
+                        ${data.imageUrl ? `<img src="${data.imageUrl}" alt="${escapeHtml(data.title)}">` : '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"><i class="fas fa-film" style="font-size:48px;"></i></div>'}
+                    </div>
+                    <div class="vimeus-card-content">
+                        <div class="vimeus-card-title">${escapeHtml(data.title)}</div>
+                        <div class="vimeus-card-meta">TMDB: ${data.tmdbId || 'N/A'}</div>
+                        <div class="vimeus-card-actions">
+                            <button class="danger" onclick="deleteItem('movies', '${doc.id}')">🗑️</button>
+                        </div>
+                    </div>
+                </div>
             `;
         });
-        document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay películas</td></tr>';
+        html += '</div>';
+        container.innerHTML = html;
     } catch (error) {
-        console.error('Error loading movies:', error);
+        console.error(error);
+        container.innerHTML = '<div class="loading-text" style="color:#ef4444;">Error al cargar películas</div>';
     }
 }
 
 async function loadSeries() {
-    const seriesDiv = document.getElementById('seriesList');
-    seriesDiv.innerHTML = '<div class="loading-text">Cargando series...</div>';
-    
+    const container = document.getElementById('seriesList');
     try {
         const snapshot = await db.collection('series').get();
         
         if (snapshot.size === 0) {
-            seriesDiv.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "+ Agregar Serie" para crear una.</div>';
+            container.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "Importar de Vimeus" para empezar.</div>';
             return;
         }
         
-        let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse;"><thead><tr><th style="padding:12px; color:#c084fc;">Título</th><th style="padding:12px; color:#c084fc;">Imagen</th><th style="padding:12px; color:#c084fc;">Año</th><th style="padding:12px; color:#c084fc;">Acciones</th></tr></thead><tbody>';
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const title = data.title || 'Sin título';
-            const year = data.year || '—';
-            const imageUrl = data.imageUrl || '';
-            
-            html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding:12px;">${escapeHtml(title)}</td>
-                    <td style="padding:12px;">${imageUrl ? `<img src="${imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${escapeHtml(year)}</td>
-                    <td style="padding:12px;">
-                        <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b; border:none; padding:5px 10px; border-radius:20px; cursor:pointer;">✏️</button>
-                        <button onclick="deleteItem('series', '${doc.id}')" style="background:#ef4444; border:none; padding:5px 10px; border-radius:20px; cursor:pointer;">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        html += '</tbody></table></div>';
-        seriesDiv.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error loading series:', error);
-        seriesDiv.innerHTML = `<div class="loading-text" style="color:#ef4444;">❌ Error al cargar las series: ${error.message}</div>`;
-    }
-}
-
-async function loadMusic() {
-    try {
-        const snapshot = await db.collection('music').get();
-        let html = '';
+        let html = '<div class="vimeus-grid">';
         snapshot.forEach(doc => {
             const data = doc.data();
             html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding:12px;">${escapeHtml(data.title || '—')}</td>
-                    <td style="padding:12px;">${escapeHtml(data.artist || '—')}</td>
-                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
-                    <td style="padding:12px;">
-                        <button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                        <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button>
-                    </td>
-                </tr>
+                <div class="vimeus-card-item">
+                    <div class="vimeus-card-poster">
+                        ${data.imageUrl ? `<img src="${data.imageUrl}" alt="${escapeHtml(data.title)}">` : '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"><i class="fas fa-tv" style="font-size:48px;"></i></div>'}
+                    </div>
+                    <div class="vimeus-card-content">
+                        <div class="vimeus-card-title">${escapeHtml(data.title)}</div>
+                        <div class="vimeus-card-meta">TMDB: ${data.tmdbId || 'N/A'}</div>
+                        <div class="vimeus-card-actions">
+                            <button class="danger" onclick="deleteItem('series', '${doc.id}')">🗑️</button>
+                        </div>
+                    </div>
+                </div>
             `;
         });
-        document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5" style="padding:40px; text-align:center;">No hay música</td></tr>';
+        html += '</div>';
+        container.innerHTML = html;
     } catch (error) {
-        console.error('Error loading music:', error);
-    }
-}
-
-async function loadRadios() {
-    try {
-        const snapshot = await db.collection('radios').get();
-        let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding:12px;">${escapeHtml(data.name || '—')}</td>
-                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
-                    <td style="padding:12px;">
-                        <button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                        <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-        document.getElementById('radiosTable').innerHTML = html || '</table><td colspan="4" style="padding:40px; text-align:center;">No hay radios</td></tr>';
-    } catch (error) {
-        console.error('Error loading radios:', error);
-    }
-}
-
-async function loadMusicVideos() {
-    try {
-        const snapshot = await db.collection('musicVideos').get();
-        let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <td style="padding:12px;">${escapeHtml(data.title || '—')}</td>
-                    <td style="padding:12px;">${escapeHtml(data.artist || '—')}</td>
-                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-                    <td style="padding:12px;">
-                        <button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                        <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-        document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5" style="padding:40px; text-align:center;">No hay videos musicales</td></tr>';
-    } catch (error) {
-        console.error('Error loading music videos:', error);
+        console.error(error);
+        container.innerHTML = '<div class="loading-text" style="color:#ef4444;">Error al cargar series</div>';
     }
 }
 
@@ -602,7 +566,7 @@ async function loadCodes() {
         snapshot.forEach(doc => {
             const c = doc.data();
             html += `
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <tr>
                     <td style="padding:12px;"><code>${doc.id}</code></td>
                     <td style="padding:12px;"><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
                     <td style="padding:12px;"><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
@@ -611,451 +575,107 @@ async function loadCodes() {
         });
         document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3" style="padding:40px; text-align:center;">No hay códigos</td></tr>';
     } catch (error) {
-        console.error('Error loading codes:', error);
+        console.error(error);
     }
 }
 
-// ==================== GESTIÓN DE SERIES (TEMPORADAS Y EPISODIOS) ====================
-function renderSeasonsAndEpisodes(seasons = []) {
-    const container = document.getElementById('seasonsContainer');
-    if (!container) return;
-    
-    if (!seasons || seasons.length === 0) {
-        container.innerHTML = `
-            <div class="seasons-container">
-                <div class="seasons-title">📺 Temporadas y Episodios</div>
-                <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 16px;">
-                    <p>No hay temporadas creadas.</p>
-                    <button type="button" id="addSeasonMainBtn" class="add-season-btn" style="margin-top: 15px;">+ Agregar Primera Temporada</button>
-                </div>
-            </div>
-        `;
-        document.getElementById('addSeasonMainBtn')?.addEventListener('click', () => addSeason());
+// ==================== IMPORTAR CONTENIDO ====================
+function openImportModal(type) {
+    if (isGuest) { alert('Modo invitado no puede importar'); return; }
+    currentImportType = type;
+    document.getElementById('modalTitle').innerText = type === 'movies' ? '🎬 Importar Película de Vimeus' : '📺 Importar Serie de Vimeus';
+    document.getElementById('searchResults').innerHTML = '<div class="loading-text">🔍 Busca para ver resultados</div>';
+    document.getElementById('importModal').style.display = 'flex';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchInput').focus();
+}
+
+async function searchAndDisplay() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) {
+        showToast('Ingresa un título para buscar', 'error');
         return;
     }
     
-    let html = `
-        <div class="seasons-container">
-            <div class="seasons-title">📺 Temporadas y Episodios</div>
-    `;
+    const resultsDiv = document.getElementById('searchResults');
+    resultsDiv.innerHTML = '<div class="loading-text"><i class="fas fa-spinner fa-spin"></i> Buscando en Vimeus...</div>';
     
-    seasons.forEach((season, seasonIdx) => {
-        html += `
-            <div class="season-card" data-season-index="${seasonIdx}">
-                <div class="season-header">
-                    <div class="season-number-title">Temporada ${season.number}</div>
-                    <div class="season-buttons">
-                        <button type="button" class="info btn-icon" onclick="addEpisode(${seasonIdx})">+ Episodio</button>
-                        <button type="button" class="danger btn-icon" onclick="removeSeason(${seasonIdx})">🗑️ Eliminar Temporada</button>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>Número de Temporada</label><input type="number" class="season-number" value="${season.number}" placeholder="1"></div>
-                    <div class="form-group"><label>Título de Temporada (opcional)</label><input type="text" class="season-title-input" value="${escapeHtml(season.title || '')}" placeholder="Ej: Parte 1"></div>
-                </div>
-                <div class="episodes-list">
-                    <div class="episodes-title">📋 Episodios</div>
-        `;
+    try {
+        // Buscar en ambas páginas para tener más resultados
+        let allItems = [];
         
-        const episodes = season.episodes || [];
-        if (episodes.length === 0) {
-            html += `<div style="padding: 10px; text-align: center; color: #94a3b8;">No hay episodios en esta temporada</div>`;
-        } else {
-            episodes.forEach((ep, epIdx) => {
-                html += `
-                    <div class="episode-item" data-episode-index="${epIdx}">
-                        <div class="episode-header">
-                            <span><strong>Episodio ${ep.number}</strong>: ${escapeHtml(ep.title)}</span>
-                            <button type="button" class="danger btn-icon" onclick="removeEpisode(${seasonIdx}, ${epIdx})">✕ Eliminar</button>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
-                            <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
-                        </div>
-                        <div class="form-group"><label>URL del Video</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
-                    </div>
-                `;
-            });
-        }
-        
-        html += `
-                    <button type="button" class="info btn-icon add-episode-btn" onclick="addEpisode(${seasonIdx})">+ Agregar Episodio a esta Temporada</button>
-                </div>
-            </div>
-        `;
-    });
-    
-    html += `<button type="button" id="addSeasonBtn" class="add-season-btn">+ Agregar Nueva Temporada</button></div>`;
-    container.innerHTML = html;
-    
-    document.getElementById('addSeasonBtn')?.addEventListener('click', () => addSeason());
-}
-
-function addSeason() {
-    const seasons = collectSeasonsFromForm();
-    const newSeasonNumber = seasons.length + 1;
-    seasons.push({
-        number: newSeasonNumber,
-        title: `Temporada ${newSeasonNumber}`,
-        episodes: []
-    });
-    renderSeasonsAndEpisodes(seasons);
-}
-
-function addEpisode(seasonIdx) {
-    const seasons = collectSeasonsFromForm();
-    const newEpNumber = (seasons[seasonIdx].episodes?.length || 0) + 1;
-    if (!seasons[seasonIdx].episodes) seasons[seasonIdx].episodes = [];
-    seasons[seasonIdx].episodes.push({
-        number: newEpNumber,
-        title: `Episodio ${newEpNumber}`,
-        videoUrl: ''
-    });
-    renderSeasonsAndEpisodes(seasons);
-}
-
-function removeSeason(seasonIdx) {
-    if (confirm('¿Eliminar esta temporada y TODOS sus episodios? Esta acción no se puede deshacer.')) {
-        const seasons = collectSeasonsFromForm();
-        seasons.splice(seasonIdx, 1);
-        seasons.forEach((s, idx) => s.number = idx + 1);
-        renderSeasonsAndEpisodes(seasons);
-    }
-}
-
-function removeEpisode(seasonIdx, episodeIdx) {
-    if (confirm('¿Eliminar este episodio?')) {
-        const seasons = collectSeasonsFromForm();
-        seasons[seasonIdx].episodes.splice(episodeIdx, 1);
-        seasons[seasonIdx].episodes.forEach((ep, idx) => ep.number = idx + 1);
-        renderSeasonsAndEpisodes(seasons);
-    }
-}
-
-function collectSeasonsFromForm() {
-    const seasons = [];
-    const seasonCards = document.querySelectorAll('.season-card');
-    seasonCards.forEach(card => {
-        const seasonNumber = parseInt(card.querySelector('.season-number')?.value || 0);
-        const seasonTitle = card.querySelector('.season-title-input')?.value || '';
-        const episodes = [];
-        const episodeItems = card.querySelectorAll('.episode-item');
-        episodeItems.forEach(epItem => {
-            const epNumber = parseInt(epItem.querySelector('.episode-number')?.value || 0);
-            const epTitle = epItem.querySelector('.episode-title-input')?.value || '';
-            const epUrl = epItem.querySelector('.episode-url')?.value || '';
-            if (epNumber > 0 && epTitle) {
-                episodes.push({ number: epNumber, title: epTitle, videoUrl: epUrl });
+        for (let page = 1; page <= 2; page++) {
+            const result = await fetchVimeusListings(currentImportType, page, query);
+            if (result.items && result.items.length > 0) {
+                allItems.push(...result.items);
             }
-        });
-        if (seasonNumber > 0) {
-            seasons.push({ number: seasonNumber, title: seasonTitle, episodes: episodes });
+            if (!result.hasNext) break;
         }
-    });
-    return seasons;
-}
-
-// ==================== MODAL DE EDICIÓN CON TMDB ====================
-function createSearchUI(type, onSelect) {
-    const container = document.createElement('div');
-    container.className = 'form-group';
-    container.innerHTML = `
-        <label>🔍 Buscar en TMDB <span style="background:#01b4e4; padding:2px 8px; border-radius:20px; font-size:10px; margin-left:8px;">The Movie Database</span></label>
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="tmdbSearchInput" placeholder="Ej: Inception, The Last of Us..." style="flex: 1;">
-            <button type="button" id="tmdbSearchBtn" class="info" style="width: auto; padding: 12px 20px;">Buscar</button>
-        </div>
-        <div id="tmdbResults" class="search-results" style="display:none;"></div>
-    `;
-    
-    const searchInput = container.querySelector('#tmdbSearchInput');
-    const searchBtn = container.querySelector('#tmdbSearchBtn');
-    const resultsDiv = container.querySelector('#tmdbResults');
-    
-    searchBtn.onclick = async () => {
-        const query = searchInput.value.trim();
-        if (!query) return;
         
-        resultsDiv.style.display = 'block';
-        resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Buscando...</div>';
-        
-        const results = await searchTMDB(query, type);
-        
-        if (results.length === 0) {
-            resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ No se encontraron resultados</div>';
+        if (allItems.length === 0) {
+            resultsDiv.innerHTML = '<div class="loading-text">❌ No se encontraron resultados. Prueba con otro título.</div>';
             return;
         }
         
-        resultsDiv.innerHTML = '';
-        results.forEach(result => {
-            const title = result.title || result.name;
-            const year = result.release_date?.substring(0,4) || result.first_air_date?.substring(0,4) || '?';
-            const poster = result.poster_path ? `${TMDB_IMAGE_BASE}${result.poster_path}` : '';
+        // Mostrar resultados
+        let html = '<div class="vimeus-grid">';
+        allItems.forEach(item => {
+            const posterUrl = item.poster ? `${TMDB_IMAGE_BASE}${item.poster}` : '';
+            const embedUrl = getEmbedUrl(currentImportType === 'movies' ? 'movie' : 'serie', item.tmdb_id);
             
-            const item = document.createElement('div');
-            item.className = 'search-result-item';
-            item.onclick = async () => {
-                resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Cargando detalles...</div>';
-                const details = await getTMDBDetails(type, result.id);
-                if (details) {
-                    onSelect(details);
-                    resultsDiv.style.display = 'none';
-                    searchInput.value = '';
-                } else {
-                    resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ Error al cargar detalles</div>';
-                }
-            };
-            
-            item.innerHTML = `
-                ${poster ? `<img src="${poster}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
-                <div style="flex:1">
-                    <strong>${escapeHtml(title)}</strong>
-                    <div style="font-size:12px; color:#94a3b8;">${year} • ID: ${result.id}</div>
+            html += `
+                <div class="vimeus-card-item">
+                    <div class="vimeus-card-poster">
+                        ${posterUrl ? `<img src="${posterUrl}" alt="${escapeHtml(item.title)}">` : '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"><i class="fas fa-film" style="font-size:36px;"></i></div>'}
+                    </div>
+                    <div class="vimeus-card-content">
+                        <div class="vimeus-card-title">${escapeHtml(item.title)}</div>
+                        <div class="vimeus-card-meta">TMDB: ${item.tmdb_id}</div>
+                        <div class="vimeus-card-actions">
+                            <button class="success" onclick="importContent(${item.tmdb_id}, '${escapeHtml(item.title)}', '${posterUrl}', '${embedUrl}')">
+                                <i class="fas fa-download"></i> Importar
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <button style="background:#10b981; border:none; padding:5px 15px; border-radius:40px; color:white; cursor:pointer;">Seleccionar</button>
             `;
-            resultsDiv.appendChild(item);
         });
-    };
-    
-    return container;
+        html += '</div>';
+        resultsDiv.innerHTML = html;
+        
+    } catch (error) {
+        console.error(error);
+        resultsDiv.innerHTML = '<div class="loading-text" style="color:#ef4444;">❌ Error al buscar contenido</div>';
+    }
 }
 
-function openAddModal(type) {
-    if (isGuest) { alert('Modo invitado'); return; }
-    currentEditType = type;
-    currentEditId = null;
+async function importContent(tmdbId, title, imageUrl, embedUrl) {
+    if (isGuest) { showToast('Modo invitado no puede importar', 'error'); return; }
     
-    const modal = document.getElementById('contentModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalFields = document.getElementById('modalFields');
-    
-    if (type === 'series') {
-        modalTitle.innerText = '📺 Nueva Serie';
-        modalFields.innerHTML = `
-            <div id="tmdbSearchContainer"></div>
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la serie"></div>
-            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la serie..."></textarea></div>
-            <div id="seasonsContainer"></div>
-        `;
+    try {
+        const collection = currentImportType === 'movies' ? 'movies' : 'series';
+        const docId = `${collection}_${tmdbId}`;
         
-        // Agregar buscador TMDB
-        const searchContainer = document.getElementById('tmdbSearchContainer');
-        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
-        searchContainer.appendChild(searchUI);
-        
-        // Inicializar sección de temporadas
-        renderSeasonsAndEpisodes([]);
-        
-    } else if (type === 'movies') {
-        modalTitle.innerText = '🎬 Nueva Película';
-        modalFields.innerHTML = `
-            <div id="tmdbSearchContainer"></div>
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la película"></div>
-            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://www.youtube.com/embed/..."></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
-        `;
-        
-        // Agregar buscador TMDB
-        const searchContainer = document.getElementById('tmdbSearchContainer');
-        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
-        searchContainer.appendChild(searchUI);
-        
-    } else if (type === 'music') {
-        modalTitle.innerText = '🎵 Nueva Canción';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Audio/Video</label><input id="edit_audioUrl" placeholder="https://..."></div>
-        `;
-    } else if (type === 'radios') {
-        modalTitle.innerText = '📻 Nueva Radio';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Nombre *</label><input id="edit_name" placeholder="Nombre"></div>
-            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Género"></div>
-        `;
-    } else if (type === 'musicVideos') {
-        modalTitle.innerText = '🎤 Nuevo Video Musical';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
-        `;
-    }
-    
-    const imageInput = document.getElementById('edit_imageUrl');
-    const preview = document.getElementById('imagePreview');
-    if (imageInput && preview) {
-        imageInput.oninput = () => {
-            if (imageInput.value) {
-                preview.style.backgroundImage = `url('${imageInput.value}')`;
-                preview.style.backgroundSize = 'cover';
-            } else {
-                preview.style.backgroundImage = '';
-            }
+        const data = {
+            tmdbId: tmdbId,
+            title: title,
+            imageUrl: imageUrl,
+            embedUrl: embedUrl,
+            createdAt: new Date()
         };
-    }
-    
-    modal.style.display = 'flex';
-}
-
-window.openEditModal = async (type, id) => {
-    if (isGuest) { alert('Modo invitado'); return; }
-    try {
-        const doc = await db.collection(type).doc(id).get();
-        if (doc.exists) {
-            currentEditType = type;
-            currentEditId = id;
-            
-            const modal = document.getElementById('contentModal');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalFields = document.getElementById('modalFields');
-            const data = doc.data();
-            
-            if (type === 'series') {
-                modalTitle.innerText = '📺 Editar Serie';
-                modalFields.innerHTML = `
-                    <div id="tmdbSearchContainer"></div>
-                    <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-                    <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                    <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
-                    <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" value="${escapeHtml(data.backdropUrl || '')}"></div>
-                    <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
-                    <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
-                    <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
-                    <div id="seasonsContainer"></div>
-                `;
-                
-                // Agregar buscador TMDB
-                const searchContainer = document.getElementById('tmdbSearchContainer');
-                const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
-                searchContainer.appendChild(searchUI);
-                
-                // Renderizar temporadas existentes
-                renderSeasonsAndEpisodes(data.seasons || []);
-                
-            } else if (type === 'movies') {
-                modalTitle.innerText = '🎬 Editar Película';
-                modalFields.innerHTML = `
-                    <div id="tmdbSearchContainer"></div>
-                    <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-                    <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                    <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
-                    <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" value="${escapeHtml(data.backdropUrl || '')}"></div>
-                    <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-                    <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
-                    <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
-                    <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
-                `;
-                
-                // Agregar buscador TMDB
-                const searchContainer = document.getElementById('tmdbSearchContainer');
-                const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
-                searchContainer.appendChild(searchUI);
-                
-            } else {
-                openAddModal(type);
-                return;
-            }
-            
-            const imageInput = document.getElementById('edit_imageUrl');
-            const preview = document.getElementById('imagePreview');
-            if (imageInput && preview) {
-                imageInput.oninput = () => {
-                    if (imageInput.value) {
-                        preview.style.backgroundImage = `url('${imageInput.value}')`;
-                        preview.style.backgroundSize = 'cover';
-                    } else {
-                        preview.style.backgroundImage = '';
-                    }
-                };
-            }
-            
-            modal.style.display = 'flex';
-        }
-    } catch (error) {
-        console.error('Error opening edit modal:', error);
-        alert('Error al cargar el contenido');
-    }
-};
-
-async function saveContent() {
-    if (!currentEditType) return;
-    if (isGuest) { alert('Modo invitado'); closeModal(); return; }
-    
-    try {
-        const type = currentEditType;
-        const id = currentEditId || db.collection(type).doc().id;
-        const updateData = { updatedAt: new Date() };
         
-        if (type === 'series') {
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
-            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            updateData.seasons = collectSeasonsFromForm();
-        } else if (type === 'movies') {
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
-            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-        } else if (type === 'music') {
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
-        } else if (type === 'radios') {
-            updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
-            if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
-            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-        } else if (type === 'musicVideos') {
-            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        }
+        await db.collection(collection).doc(docId).set(data);
         
-        if (!currentEditId) updateData.createdAt = new Date();
+        showToast(`✅ "${title}" importado correctamente`);
         
-        await db.collection(type).doc(id).set(updateData, { merge: true });
-        alert('✅ Guardado correctamente');
-        closeModal();
+        // Cerrar modal y refrescar
+        document.getElementById('importModal').style.display = 'none';
         refreshCurrentSection();
+        
     } catch (error) {
-        console.error('Error saving:', error);
-        alert('Error al guardar: ' + error.message);
+        console.error(error);
+        showToast('Error al importar: ' + error.message, 'error');
     }
-}
-
-function closeModal() {
-    document.getElementById('contentModal').style.display = 'none';
-    currentEditType = null;
-    currentEditId = null;
 }
 
 // ==================== ACCIONES ====================
@@ -1066,19 +686,6 @@ window.toggleUserStatus = async (uid, isActive) => {
         await loadUsers();
         await loadStats();
     } catch (error) {
-        console.error(error);
-        alert('Error al actualizar usuario');
-    }
-};
-
-window.toggleUserHost = async (uid, isHost) => {
-    if (isGuest) { alert('Modo invitado'); return; }
-    try {
-        await db.collection('users').doc(uid).update({ isHost: !isHost });
-        await loadUsers();
-        await loadStats();
-    } catch (error) {
-        console.error(error);
         alert('Error al actualizar usuario');
     }
 };
@@ -1089,8 +696,8 @@ window.deleteItem = async (type, id) => {
         try {
             await db.collection(type).doc(id).delete();
             await refreshCurrentSection();
+            showToast('✅ Contenido eliminado');
         } catch (error) {
-            console.error(error);
             alert('Error al eliminar');
         }
     }
@@ -1113,9 +720,6 @@ async function refreshCurrentSection() {
     if (currentSection === 'users') await loadUsers();
     else if (currentSection === 'movies') await loadMovies();
     else if (currentSection === 'series') await loadSeries();
-    else if (currentSection === 'music') await loadMusic();
-    else if (currentSection === 'radios') await loadRadios();
-    else if (currentSection === 'musicVideos') await loadMusicVideos();
     else if (currentSection === 'codes') await loadCodes();
     else if (currentSection === 'dashboard') await loadStats();
 }
@@ -1128,9 +732,6 @@ window.showSection = async (section) => {
         'users': 'usersSection', 
         'movies': 'moviesSection',
         'series': 'seriesSection',
-        'music': 'musicSection',
-        'radios': 'radiosSection',
-        'musicVideos': 'musicVideosSection',
         'codes': 'codesSection'
     };
     document.getElementById(sections[section]).classList.remove('hidden');
@@ -1142,13 +743,18 @@ async function generateNewCode() {
     try {
         const codeId = 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase();
         await db.collection('codes').doc(codeId).set({ ownerId: 'admin', used: false, createdAt: new Date() });
-        alert(`✅ Código generado: ${codeId}`);
+        showToast(`✅ Código generado: ${codeId}`);
         await loadCodes();
         await loadStats();
     } catch (error) {
         console.error(error);
     }
 }
+
+// Exponer funciones globales
+window.openImportModal = openImportModal;
+window.importContent = importContent;
+window.searchAndDisplay = searchAndDisplay;
 
 // ==================== EVENT LISTENERS ====================
 document.getElementById('loginBtn').onclick = async () => {
@@ -1164,6 +770,7 @@ document.getElementById('loginBtn').onclick = async () => {
             document.getElementById('userEmail').innerText = email;
             await loadStats();
             await loadUsers();
+            await loadMovies();
             await loadSeries();
         } else {
             document.getElementById('loginError').style.display = 'block';
@@ -1183,6 +790,7 @@ document.getElementById('guestBtn').onclick = async () => {
     document.getElementById('userEmail').innerText = 'Invitado (solo lectura)';
     await loadStats();
     await loadUsers();
+    await loadMovies();
     await loadSeries();
 };
 
@@ -1192,24 +800,22 @@ document.getElementById('logoutBtn').onclick = async () => {
 };
 
 document.getElementById('refreshUsers').onclick = loadUsers;
-document.getElementById('addMovieBtn').onclick = () => openAddModal('movies');
-document.getElementById('addSerieBtn').onclick = () => openAddModal('series');
-document.getElementById('addMusicBtn').onclick = () => openAddModal('music');
-document.getElementById('addRadioBtn').onclick = () => openAddModal('radios');
-document.getElementById('addMusicVideoBtn').onclick = () => openAddModal('musicVideos');
+document.getElementById('addMovieBtn').onclick = () => openImportModal('movies');
+document.getElementById('addSerieBtn').onclick = () => openImportModal('series');
 document.getElementById('generateCode').onclick = generateNewCode;
-
-document.getElementById('saveContentBtn').onclick = saveContent;
-document.getElementById('closeModalBtn').onclick = closeModal;
+document.getElementById('searchBtn').onclick = searchAndDisplay;
+document.getElementById('closeModalBtn').onclick = () => document.getElementById('importModal').style.display = 'none';
+document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchAndDisplay();
+});
 
 // Inicializar
 db.collection('admin').doc('config').get().then(doc => {
     if (!doc.exists) db.collection('admin').doc('config').set({ adminEmail: 'admin@streamhub.com' });
 });
 
-['movies', 'series', 'music', 'radios', 'musicVideos', 'codes', 'users'].forEach(col => {
-    db.collection(col).limit(1).get();
-});
+console.log('✅ Panel de administración con Vimeus cargado correctamente');
+console.log('📌 API Key configurada:', VIMEUS_API_KEY.substring(0, 20) + '...');
 </script>
 </body>
 </html>
