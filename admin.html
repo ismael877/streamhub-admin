@@ -260,19 +260,19 @@
         <!-- Música -->
         <div id="musicSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></td></div>
         </div>
 
         <!-- Radios -->
         <div id="radiosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></tr></div>
         </div>
 
         <!-- Videos Musicales -->
         <div id="musicVideosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></td></div>
+            <div style="overflow-x: auto;"></td><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
         </div>
 
         <!-- Códigos -->
@@ -483,7 +483,7 @@ async function loadUsers() {
                     <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
                     <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
                 </td>
-            </table>`;
+            </tr>`;
         });
         document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
     } catch (error) {
@@ -503,8 +503,8 @@ async function loadMovies() {
                 <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
                 <td>${data.year || '—'}</td>
                 <td>
-                    <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                    <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
+                    <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b; padding:5px 10px;">✏️</button>
+                    <button onclick="deleteItem('movies', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button>
                 </td>
             </tr>`;
         });
@@ -514,44 +514,101 @@ async function loadMovies() {
     }
 }
 
+// ==================== FUNCIÓN LOAD SERIES CORREGIDA ====================
 async function loadSeries() {
     try {
-        console.log('Cargando series desde Firebase...');
+        console.log('🔄 Cargando series desde Firebase...');
         const snapshot = await db.collection('series').get();
-        console.log('Series encontradas:', snapshot.size);
+        console.log('📊 Series encontradas:', snapshot.size);
         
-        if (snapshot.size === 0) {
-            document.getElementById('seriesTableContainer').innerHTML = '<div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody><tr><td colspan="5">No hay series. Haz clic en "+ Agregar Serie" para crear una.</td></tr></tbody></table></div>';
+        const container = document.getElementById('seriesTableContainer');
+        if (!container) {
+            console.error('No se encontró el contenedor seriesTableContainer');
             return;
         }
         
-        let html = '<div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody>';
+        if (snapshot.size === 0) {
+            container.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="padding:12px; text-align:left; color:#c084fc;">Título</th>
+                                <th style="padding:12px; text-align:left; color:#c084fc;">Temporadas</th>
+                                <th style="padding:12px; text-align:left; color:#c084fc;">Episodios</th>
+                                <th style="padding:12px; text-align:left; color:#c084fc;">Año</th>
+                                <th style="padding:12px; text-align:left; color:#c084fc;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" style="padding:40px; text-align:center;">📭 No hay series. Haz clic en "+ Agregar Serie" para crear una.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = `
+            <div style="overflow-x: auto;">
+                <table style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding:12px; text-align:left; color:#c084fc;">Título</th>
+                            <th style="padding:12px; text-align:left; color:#c084fc;">Temporadas</th>
+                            <th style="padding:12px; text-align:left; color:#c084fc;">Episodios</th>
+                            <th style="padding:12px; text-align:left; color:#c084fc;">Año</th>
+                            <th style="padding:12px; text-align:left; color:#c084fc;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
         
         snapshot.forEach(doc => {
             const data = doc.data();
-            const seasonsCount = data.seasons ? data.seasons.length : 0;
+            const title = data.title || 'Sin título';
+            const year = data.year || '—';
+            let seasonsCount = 0;
             let episodesCount = 0;
-            if (data.seasons) {
+            
+            if (data.seasons && Array.isArray(data.seasons)) {
+                seasonsCount = data.seasons.length;
                 data.seasons.forEach(season => {
-                    episodesCount += season.episodes ? season.episodes.length : 0;
+                    if (season.episodes && Array.isArray(season.episodes)) {
+                        episodesCount += season.episodes.length;
+                    }
                 });
             }
-            html += `<tr>
-                <td>${data.title || '—'}</td>
-                <td>${seasonsCount} ${seasonsCount === 1 ? 'temporada' : 'temporadas'}</td>
-                <td>${episodesCount} episodios</td>
-                <td>${data.year || '—'}</td>
-                <td>
-                    <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b; padding:5px 10px;">✏️</button>
-                    <button onclick="deleteItem('series', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button>
-                </td>
-            </tr>`;
+            
+            html += `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <td style="padding:12px;">${escapeHtml(title)}</td>
+                    <td style="padding:12px;">${seasonsCount} ${seasonsCount === 1 ? 'temporada' : 'temporadas'}</td>
+                    <td style="padding:12px;">${episodesCount} episodios</td>
+                    <td style="padding:12px;">${escapeHtml(year)}</td>
+                    <td style="padding:12px;">
+                        <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b; border:none; padding:5px 10px; border-radius:20px; color:white; cursor:pointer; margin-right:5px;">✏️</button>
+                        <button onclick="deleteItem('series', '${doc.id}')" style="background:#ef4444; border:none; padding:5px 10px; border-radius:20px; color:white; cursor:pointer;">🗑️</button>
+                    </td>
+                </tr>
+            `;
         });
-        html += '</tbody></table></div>';
-        document.getElementById('seriesTableContainer').innerHTML = html;
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        console.log('✅ Series cargadas correctamente');
+        
     } catch (error) {
-        console.error('Error loading series:', error);
-        document.getElementById('seriesTableContainer').innerHTML = '<div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody><tr><td colspan="5">Error al cargar las series. Verifica tu conexión a Firebase.</td></tr></tbody></table></div>';
+        console.error('❌ Error loading series:', error);
+        const container = document.getElementById('seriesTableContainer');
+        if (container) {
+            container.innerHTML = `<div style="padding:20px; text-align:center; color:#ef4444;">Error al cargar las series: ${error.message}</div>`;
+        }
     }
 }
 
@@ -566,7 +623,7 @@ async function loadMusic() {
                 <td>${data.artist || '—'}</td>
                 <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                 <td>${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
-                <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
+                <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b; padding:5px 10px;">✏️</button><button onclick="deleteItem('music', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
             </tr>`;
         });
         document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
@@ -585,10 +642,10 @@ async function loadRadios() {
                 <td>${data.name || '—'}</td>
                 <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                 <td>${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
-                <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
+                <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b; padding:5px 10px;">✏️</button><button onclick="deleteItem('radios', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
             </tr>`;
         });
-        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
+        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios学了</td></tr>';
     } catch (error) {
         console.error('Error loading radios:', error);
     }
@@ -605,7 +662,7 @@ async function loadMusicVideos() {
                 <td>${data.artist || '—'}</td>
                 <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                 <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-                <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
+                <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b; padding:5px 10px;">✏️</button><button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
             </tr>`;
         });
         document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
@@ -623,10 +680,10 @@ async function loadCodes() {
             html += `<tr>
                 <td><code>${doc.id}</code></td>
                 <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-                <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
-            </td>`;
+                <td><button onclick="deleteCode('${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td>
+            </tr>`;
         });
-        document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
+        document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</tr></table>';
     } catch (error) {
         console.error('Error loading codes:', error);
     }
