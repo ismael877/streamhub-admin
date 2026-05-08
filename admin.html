@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin</title>
+    <title>StreamHub Admin - Con TMDB</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -48,6 +48,7 @@
         button.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
         button.success { background: linear-gradient(90deg, #10b981, #059669); }
         button.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        button.info { background: linear-gradient(90deg, #3b82f6, #2563eb); }
         .hidden { display: none; }
         .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
@@ -67,7 +68,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: none;
             align-items: center;
             justify-content: center;
@@ -77,27 +78,17 @@
             background: #1e293b;
             border-radius: 24px;
             padding: 30px;
-            max-width: 550px;
+            max-width: 600px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
         }
-        .modal-content h3 {
-            margin-bottom: 20px;
-            color: #c084fc;
-        }
+        .modal-content h3 { margin-bottom: 20px; color: #c084fc; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: #94a3b8; }
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
+        .form-row { display: flex; gap: 15px; }
         .form-row .form-group { flex: 1; }
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
         .modal-buttons button { flex: 1; }
         .image-preview {
             width: 100%;
@@ -107,9 +98,30 @@
             border-radius: 16px;
             margin-bottom: 10px;
             background-color: #0f172a;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><circle cx="8.5" cy="8.5" r="2.5"/><path d="M21 15l-5-4-3 3-4-4-5 5"/></svg>');
-            background-repeat: no-repeat;
-            background-position: center;
+        }
+        .search-results {
+            background: #0f172a;
+            border-radius: 16px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .search-result-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .search-result-item:hover {
+            background: #334155;
+        }
+        .tmdb-badge {
+            background: #01b4e4;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            margin-left: 8px;
         }
     </style>
 </head>
@@ -173,19 +185,19 @@
         <!-- Música -->
         <div id="musicSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
         </div>
 
         <!-- Radios -->
         <div id="radiosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <!-- Videos Musicales -->
         <div id="musicVideosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><td><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
         </div>
 
         <!-- Códigos -->
@@ -197,7 +209,7 @@
     </div>
 </div>
 
-<!-- Modal para agregar/editar contenido (formulario completo) -->
+<!-- Modal para agregar/editar contenido -->
 <div id="contentModal" class="modal">
     <div class="modal-content">
         <h3 id="modalTitle">Agregar Contenido</h3>
@@ -210,7 +222,7 @@
 </div>
 
 <script>
-// Configuración de Firebase
+// ==================== CONFIGURACIÓN ====================
 const firebaseConfig = {
     apiKey: "AIzaSyDvfEZydbSdzZlN93WVnUnGXWdhk11xngQ",
     authDomain: "streamhub-app-5aa0e.firebaseapp.com",
@@ -219,6 +231,11 @@ const firebaseConfig = {
     messagingSenderId: "728979558000",
     appId: "1:728979558000:web:293b0114fe0d2201e1aeb5"
 };
+
+// Configuración de TMDB
+const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
+const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MmExMzlmZTIxYjZkMjk2YWIxMjY2MTQ4OWE2OTM0ZCIsIm5iZiI6MTQ3MzU2NjI0NS42MDYwMDAyLCJzdWIiOiI1N2Q0ZDYyNTkyNTE0MTM2NjcwMDMxMGIiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.1NSgal1i2sUbcYJ4jX3Yr1RChZsTZexofto5oCklIGI";
+const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -230,14 +247,111 @@ let isGuest = false;
 let currentEditType = null;
 let currentEditId = null;
 
-// Verificar admin
+// ==================== FUNCIONES TMDB ====================
+async function searchTMDB(query, type) {
+    const searchType = type === 'movies' ? 'movie' : 'tv';
+    const url = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.results || [];
+    } catch (error) {
+        console.error('Error buscando en TMDB:', error);
+        return [];
+    }
+}
+
+async function getTMDBDetails(type, id) {
+    const searchType = type === 'movies' ? 'movie' : 'tv';
+    const url = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=es`;
+    
+    try {
+        const response = await fetch(url);
+        return await response.json();
+    } catch (error) {
+        console.error('Error obteniendo detalles de TMDB:', error);
+        return null;
+    }
+}
+
+// ==================== FUNCIONES DE UI ====================
+function createSearchUI(type, onSelect) {
+    const container = document.createElement('div');
+    container.className = 'form-group';
+    container.innerHTML = `
+        <label>🔍 Buscar en TMDB <span class="tmdb-badge">The Movie Database</span></label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="tmdbSearchInput" placeholder="Ej: Inception, The Last of Us..." style="flex: 1;">
+            <button id="tmdbSearchBtn" class="info" style="width: auto; padding: 12px 20px;">Buscar</button>
+        </div>
+        <div id="tmdbResults" class="search-results hidden"></div>
+    `;
+    
+    const searchInput = container.querySelector('#tmdbSearchInput');
+    const searchBtn = container.querySelector('#tmdbSearchBtn');
+    const resultsDiv = container.querySelector('#tmdbResults');
+    
+    searchBtn.onclick = async () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        
+        resultsDiv.innerHTML = '<div class="search-result-item">Buscando...</div>';
+        resultsDiv.classList.remove('hidden');
+        
+        const results = await searchTMDB(query, type);
+        
+        if (results.length === 0) {
+            resultsDiv.innerHTML = '<div class="search-result-item">❌ No se encontraron resultados</div>';
+            return;
+        }
+        
+        resultsDiv.innerHTML = '';
+        results.forEach(result => {
+            const title = result.title || result.name;
+            const year = result.release_date?.substring(0,4) || result.first_air_date?.substring(0,4) || '?';
+            const poster = result.poster_path ? `${TMDB_IMAGE_BASE}${result.poster_path}` : '';
+            
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.innerHTML = `
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    ${poster ? `<img src="${poster}" style="width: 40px; height: 60px; object-fit: cover; border-radius: 8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
+                    <div style="flex:1">
+                        <strong>${title}</strong>
+                        <div style="font-size:12px; color:#94a3b8;">${year} • ID: ${result.id}</div>
+                    </div>
+                    <button class="select-result" data-id="${result.id}" style="background:#10b981; padding:5px 15px;">Seleccionar</button>
+                </div>
+            `;
+            
+            item.querySelector('.select-result').onclick = async (e) => {
+                e.stopPropagation();
+                resultsDiv.innerHTML = '<div class="search-result-item">Cargando detalles...</div>';
+                const details = await getTMDBDetails(type, result.id);
+                if (details) {
+                    onSelect(details);
+                    resultsDiv.classList.add('hidden');
+                    searchInput.value = '';
+                } else {
+                    resultsDiv.innerHTML = '<div class="search-result-item">❌ Error al cargar detalles</div>';
+                }
+            };
+            
+            resultsDiv.appendChild(item);
+        });
+    };
+    
+    return container;
+}
+
+// ==================== FUNCIONES DE ADMIN (CRUD) ====================
 async function isAdmin(email) {
     const doc = await db.collection('admin').doc('config').get();
     if (doc.exists && doc.data().adminEmail === email) return true;
     return email === 'admin@streamhub.com';
 }
 
-// Cargar estadísticas
 async function loadStats() {
     const users = await db.collection('users').get();
     const hosts = await db.collection('users').where('isHost', '==', true).get();
@@ -261,133 +375,92 @@ async function loadStats() {
     document.getElementById('recentUsers').innerHTML = recentHtml || 'No hay usuarios';
 }
 
-// Cargar usuarios
 async function loadUsers() {
     const users = await db.collection('users').get();
     let html = '';
     users.forEach(doc => {
         const u = doc.data();
-        html += `<tr>
-            <td>${u.email}</td>
-            <td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
-            <td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-            <td>
-                <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
-            </td>
-        </tr>`;
+        html += `<tr><td>${u.email}</td><td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td><td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
+        <td><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+        <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td></tr>`;
     });
-    document.getElementById('usersTable').innerHTML = html || '<table><td colspan="4">No hay usuarios</td></tr>';
+    document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
 }
 
-// Cargar películas
 async function loadMovies() {
     const snapshot = await db.collection('movies').get();
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-            <td>
-                <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </tr>`;
+        html += `<tr><td>${data.title || '—'}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+        <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
+        <td><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+        <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
     });
     document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4">No hay películas</td></tr>';
 }
 
-// Cargar series
 async function loadSeries() {
     const snapshot = await db.collection('series').get();
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-            <td>
-                <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </td>`;
+        html += `<tr><td>${data.title || '—'}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+        <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
+        <td><button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+        <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
     });
-    document.getElementById('seriesTable').innerHTML = html || '</table><td colspan="4">No hay series</td></tr>';
+    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="4">No hay series</td></tr>';
 }
 
-// Cargar música
 async function loadMusic() {
     const snapshot = await db.collection('music').get();
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.artist || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.audioUrl ? data.audioUrl.substring(0,40)+'...' : '—'}</td>
-            <td>
-                <button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </tr>`;
+        html += `<tr><td>${data.title || '—'}</td><td>${data.artist || '—'}</td>
+        <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+        <td>${data.audioUrl ? data.audioUrl.substring(0,40)+'...' : '—'}</td>
+        <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+        <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
     });
     document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
 }
 
-// Cargar radios
 async function loadRadios() {
     const snapshot = await db.collection('radios').get();
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr>
-            <td>${data.name || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.streamUrl ? data.streamUrl.substring(0,40)+'...' : '—'}</td>
-            <td>
-                <button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </tr>`;
+        html += `<tr><td>${data.name || '—'}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+        <td>${data.streamUrl ? data.streamUrl.substring(0,40)+'...' : '—'}</td>
+        <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+        <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
     });
     document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
 }
 
-// Cargar videos musicales
 async function loadMusicVideos() {
     const snapshot = await db.collection('musicVideos').get();
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.artist || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-            <td>
-                <button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </tr>`;
+        html += `<tr><td>${data.title || '—'}</td><td>${data.artist || '—'}</td>
+        <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+        <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
+        <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+        <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
     });
-    document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales<tr></tr>';
+    document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
 }
 
-// Cargar códigos
 async function loadCodes() {
     const snapshot = await db.collection('codes').get();
     let html = '';
     snapshot.forEach(doc => {
         const c = doc.data();
-        html += `<tr>
-            <td><code>${doc.id}</code></td>
-            <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-            <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
+        html += `<tr><td><code>${doc.id}</code></td><td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
+        <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td></tr>`;
     });
     document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
 }
@@ -411,6 +484,33 @@ function openAddModal(type) {
     showFormModal(type, {});
 }
 
+function fillFormWithTMDBData(type, data) {
+    const title = data.title || data.name;
+    const year = (data.release_date || data.first_air_date || '').substring(0,4);
+    const posterPath = data.poster_path ? `${TMDB_IMAGE_BASE}${data.poster_path}` : '';
+    const overview = data.overview || '';
+    const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
+    
+    const titleInput = document.getElementById('edit_title');
+    const imageUrlInput = document.getElementById('edit_imageUrl');
+    const yearInput = document.getElementById('edit_year');
+    const genreInput = document.getElementById('edit_genre');
+    const overviewInput = document.getElementById('edit_overview');
+    
+    if (titleInput) titleInput.value = title;
+    if (imageUrlInput) imageUrlInput.value = posterPath;
+    if (yearInput) yearInput.value = year;
+    if (genreInput) genreInput.value = genres;
+    if (overviewInput) overviewInput.value = overview;
+    
+    // Actualizar previsualización de imagen
+    const preview = document.getElementById('imagePreview');
+    if (preview && posterPath) {
+        preview.style.backgroundImage = `url('${posterPath}')`;
+        preview.style.backgroundSize = 'cover';
+    }
+}
+
 // Mostrar formulario modal
 function showFormModal(type, data) {
     const modal = document.getElementById('contentModal');
@@ -422,6 +522,7 @@ function showFormModal(type, data) {
     if (type === 'movies') {
         modalTitle.innerText = '🎬 ' + (currentEditId ? 'Editar Película' : 'Nueva Película');
         fieldsHtml = `
+            <div id="tmdbSearchContainer"></div>
             <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: Duna 2"></div>
             <div class="form-group"><label>URL de la Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
             <div id="imagePreview" class="image-preview"></div>
@@ -430,10 +531,12 @@ function showFormModal(type, data) {
                 <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}" placeholder="2024"></div>
                 <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Acción, Drama..."></div>
             </div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la película...">${escapeHtml(data.overview || '')}</textarea></div>
         `;
     } else if (type === 'series') {
         modalTitle.innerText = '📺 ' + (currentEditId ? 'Editar Serie' : 'Nueva Serie');
         fieldsHtml = `
+            <div id="tmdbSearchContainer"></div>
             <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: The Last of Us"></div>
             <div class="form-group"><label>URL de la Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
             <div id="imagePreview" class="image-preview"></div>
@@ -442,6 +545,7 @@ function showFormModal(type, data) {
                 <div class="form-group"><label>Temporadas</label><input id="edit_seasons" value="${escapeHtml(data.seasons || '')}" placeholder="1"></div>
                 <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Drama, Ciencia Ficción..."></div>
             </div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la serie...">${escapeHtml(data.overview || '')}</textarea></div>
         `;
     } else if (type === 'music') {
         modalTitle.innerText = '🎵 ' + (currentEditId ? 'Editar Canción' : 'Nueva Canción');
@@ -477,6 +581,15 @@ function showFormModal(type, data) {
     
     modalFields.innerHTML = fieldsHtml;
     
+    // Agregar buscador de TMDB solo para películas y series
+    if (type === 'movies' || type === 'series') {
+        const searchContainer = document.getElementById('tmdbSearchContainer');
+        const searchUI = createSearchUI(type, (tmdbData) => {
+            fillFormWithTMDBData(type, tmdbData);
+        });
+        searchContainer.appendChild(searchUI);
+    }
+    
     // Previsualización de imagen
     const imageInput = document.getElementById('edit_imageUrl');
     const preview = document.getElementById('imagePreview');
@@ -496,7 +609,7 @@ function showFormModal(type, data) {
     modal.style.display = 'flex';
 }
 
-// Guardar contenido (nuevo o edición)
+// Guardar contenido
 async function saveContent() {
     if (!currentEditType) return;
     if (isGuest) { alert('Modo invitado'); closeModal(); return; }
@@ -511,12 +624,14 @@ async function saveContent() {
         if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
         if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
         if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+        if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
     } else if (type === 'series') {
         updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
         if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
         if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
         if (document.getElementById('edit_seasons')?.value) updateData.seasons = document.getElementById('edit_seasons').value;
         if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+        if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
     } else if (type === 'music') {
         updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
         if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
@@ -535,13 +650,8 @@ async function saveContent() {
         if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
     }
     
-    // Si no hay id (nuevo), crear el documento
-    if (!currentEditId) {
-        updateData.createdAt = new Date();
-        await db.collection(type).doc(id).set(updateData);
-    } else {
-        await db.collection(type).doc(id).set(updateData, { merge: true });
-    }
+    if (!currentEditId) updateData.createdAt = new Date();
+    await db.collection(type).doc(id).set(updateData, { merge: true });
     
     alert('✅ Guardado correctamente');
     closeModal();
@@ -564,7 +674,6 @@ function escapeHtml(text) {
     });
 }
 
-// Acciones
 window.toggleUserStatus = async (uid, isActive) => {
     if (isGuest) { alert('Modo invitado'); return; }
     await db.collection('users').doc(uid).update({ active: !isActive });
