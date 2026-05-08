@@ -2,408 +2,510 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>StreamHub - Inicio</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+        }
+
         body {
             background: linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #1e1b4b 100%);
-            color: white;
+            color: #f1f5f9;
+            padding: 16px;
+            padding-bottom: 80px;
             min-height: 100vh;
-            padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .card {
-            background: rgba(15, 25, 45, 0.9);
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Header */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(15, 25, 45, 0.5);
             backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 24px;
-            margin-bottom: 20px;
+            padding: 12px 20px;
+            border-radius: 60px;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        input, button {
-            padding: 12px 20px;
+
+        h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #e0e7ff, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        @media (min-width: 768px) { h1 { font-size: 1.8rem; } }
+
+        .badge {
+            background: #10b981;
+            padding: 5px 14px;
             border-radius: 40px;
-            border: none;
-            font-size: 16px;
+            font-size: 0.7rem;
+            font-weight: 600;
         }
-        input {
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            width: 100%;
-            margin-bottom: 12px;
-        }
+
         button {
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
             color: white;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
-        button.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
-        button.success { background: linear-gradient(90deg, #10b981, #059669); }
-        .hidden { display: none; }
-        .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        th { color: #c084fc; }
-        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-        .badge-active { background: #10b981; }
-        .badge-inactive { background: #ef4444; }
-        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
-        .stat-card { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; text-align: center; }
-        .stat-card h2 { font-size: 2rem; color: #c084fc; }
+
+        button:active { transform: scale(0.96); }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%);
+            border-radius: 32px;
+            padding: 32px 24px;
+            margin-bottom: 32px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .hero h2 { font-size: 1.8rem; margin-bottom: 12px; }
+        .hero p { color: #94a3b8; font-size: 0.9rem; }
+
+        @media (min-width: 768px) {
+            .hero { padding: 48px 32px; }
+            .hero h2 { font-size: 2.2rem; }
+            .hero p { font-size: 1rem; }
+        }
+
+        /* Títulos de sección */
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 28px 0 16px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-title h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .section-title a {
+            color: #c084fc;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+        /* Grid responsive */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        @media (min-width: 480px) { .content-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 768px) { .content-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; } }
+        @media (min-width: 1024px) { .content-grid { grid-template-columns: repeat(5, 1fr); } }
+        @media (min-width: 1280px) { .content-grid { grid-template-columns: repeat(6, 1fr); } }
+
+        /* Tarjeta de contenido */
+        .content-card {
+            background: rgba(15, 25, 45, 0.7);
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 20px 30px -15px rgba(0,0,0,0.5);
+        }
+
+        .card-image {
+            aspect-ratio: 2/3;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 12px;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .card-icon { font-size: 3.5rem; }
+            .card-title { font-size: 1rem; }
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        /* Menú inferior */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 25, 45, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 12px;
+            z-index: 999;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            padding: 6px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .nav-item:active { background: rgba(255,255,255,0.1); }
+        .nav-icon { font-size: 1.4rem; }
+
+        /* Dropdown */
+        .dropdown-menu {
+            position: fixed;
+            bottom: 70px;
+            right: 12px;
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 8px 0;
+            min-width: 160px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 10px 16px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .dropdown-menu a:active { background: #334155; }
+
+        .footer-note {
+            text-align: center;
+            padding: 24px;
+            font-size: 0.7rem;
+            color: #475569;
+        }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <!-- Pantalla de Login -->
-    <div id="loginScreen" class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
-        <h2 style="margin-bottom: 20px;">🔐 Panel Administrador</h2>
-        <input type="email" id="email" placeholder="Correo electrónico">
-        <input type="password" id="password" placeholder="Contraseña">
-        <button id="loginBtn" style="width: 100%;">Iniciar sesión</button>
-        <button id="guestBtn" style="width: 100%; margin-top: 10px; background: #f59e0b;">🎭 Modo Invitado</button>
-        <p id="loginError" style="color: #ef4444; margin-top: 10px; display: none;">Error de conexión</p>
+    <!-- Header -->
+    <div class="nav-bar">
+        <h1>🎬 StreamHub</h1>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge" id="userRoleBadge" style="background:#3b82f6;">Cliente</span>
+            <button id="btnLogout">Salir</button>
+        </div>
     </div>
 
-    <!-- Panel Principal -->
-    <div id="adminPanel" class="hidden">
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>🎬 StreamHub Admin</h1>
-            <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
-        </div>
+    <!-- Hero -->
+    <div class="hero">
+        <h2>✨ Bienvenido a StreamHub</h2>
+        <p>Explora el mejor contenido de entretenimiento<br>Películas, Series, Música, Radios y más</p>
+    </div>
 
-        <div class="nav-buttons">
-            <button onclick="showSection('dashboard')">📊 Dashboard</button>
-            <button onclick="showSection('users')">👥 Usuarios</button>
-            <button onclick="showSection('movies')">🎬 Películas</button>
-            <button onclick="showSection('series')">📺 Series</button>
-            <button onclick="showSection('music')">🎵 Música</button>
-            <button onclick="showSection('radios')">📻 Radios</button>
-            <button onclick="showSection('codes')">🔑 Códigos</button>
-        </div>
+    <!-- ============================================ -->
+    <!-- SECCIONES CARGADAS DINÁMICAMENTE DESDE FIREBASE -->
+    <!-- ============================================ -->
+    
+    <!-- 🎬 PELÍCULAS -->
+    <div class="section-title">
+        <h3>🎬 Películas Destacadas</h3>
+        <a href="#" id="verPeliculasLink">Ver todas →</a>
+    </div>
+    <div id="moviesGrid" class="content-grid">
+        <div class="loading">Cargando películas...</div>
+    </div>
 
-        <!-- Dashboard -->
-        <div id="dashboardSection" class="card">
-            <h2>📊 Estadísticas</h2>
-            <div class="stats" id="stats"></div>
-            <h3>Últimos usuarios</h3>
-            <div id="recentUsers"></div>
-        </div>
+    <!-- 📺 SERIES -->
+    <div class="section-title">
+        <h3>📺 Series Populares</h3>
+        <a href="#" id="verSeriesLink">Ver todas →</a>
+    </div>
+    <div id="seriesGrid" class="content-grid">
+        <div class="loading">Cargando series...</div>
+    </div>
 
-        <!-- Usuarios -->
-        <div id="usersSection" class="card hidden">
-            <h2>👥 Usuarios</h2>
-            <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
-        </div>
+    <!-- 🎵 MÚSICA -->
+    <div class="section-title">
+        <h3>🎵 Música Trending</h3>
+        <a href="#" id="verMusicaLink">Ver todas →</a>
+    </div>
+    <div id="musicGrid" class="content-grid">
+        <div class="loading">Cargando música...</div>
+    </div>
 
-        <!-- Películas -->
-        <div id="moviesSection" class="card hidden">
-            <h2>🎬 Películas</h2>
-            <button id="addMovie" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Género</th><th>Año</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
-        </div>
+    <!-- 📻 RADIOS -->
+    <div class="section-title">
+        <h3>📻 Radios en Vivo</h3>
+        <a href="#" id="verRadiosLink">Ver todas →</a>
+    </div>
+    <div id="radiosGrid" class="content-grid">
+        <div class="loading">Cargando radios...</div>
+    </div>
 
-        <!-- Series -->
-        <div id="seriesSection" class="card hidden">
-            <h2>📺 Series</h2>
-            <button id="addSerie" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Género</th><th>Temporadas</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
-        </div>
+    <!-- 🎤 VIDEOS MUSICALES -->
+    <div class="section-title">
+        <h3>🎤 Videos Musicales</h3>
+        <a href="#" id="verVideosLink">Ver todos →</a>
+    </div>
+    <div id="videosGrid" class="content-grid">
+        <div class="loading">Cargando videos...</div>
+    </div>
 
-        <!-- Música -->
-        <div id="musicSection" class="card hidden">
-            <h2>🎵 Música</h2>
-            <button id="addMusic" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Álbum</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
-        </div>
-
-        <!-- Radios -->
-        <div id="radiosSection" class="card hidden">
-            <h2>📻 Radios</h2>
-            <button id="addRadio" class="success" style="margin-bottom: 15px;">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>País</th><th>Género</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
-        </div>
-
-        <!-- Códigos -->
-        <div id="codesSection" class="card hidden">
-            <h2>🔑 Códigos de invitación</h2>
-            <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
-        </div>
+    <!-- Footer -->
+    <div class="footer-note">
+        StreamHub © 2026 - Todo el contenido es propiedad de sus respectivos dueños
     </div>
 </div>
 
+<!-- Menú inferior -->
+<div class="bottom-nav">
+    <button class="nav-item" onclick="location.href='go:inicio'"><span class="nav-icon">🏠</span><span>Inicio</span></button>
+    <button class="nav-item" onclick="location.href='go:planes'"><span class="nav-icon">📦</span><span>Planes</span></button>
+    <button class="nav-item" onclick="location.href='go:clientes'"><span class="nav-icon">👥</span><span>Clientes</span></button>
+    <button class="nav-item" id="menuBtn"><span class="nav-icon">☰</span><span>Menú</span></button>
+</div>
+
+<!-- Menú desplegable -->
+<div class="dropdown-menu" id="dropdownMenu">
+    <a href="go:codigos-activos">🔑 Mis códigos activos</a>
+    <a href="go:generar-codigo">✨ Generar código</a>
+    <a href="go:politicas">📜 Políticas</a>
+    <a href="go:nosotros">👥 Nosotros</a>
+    <a href="go:contacto">📞 Contacto</a>
+    <a href="go:soporte">🆘 Soporte</a>
+</div>
+
 <script>
-// Configuración de Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyDvfEZydbSdzZlN93WVnUnGXWdhk11xngQ",
-    authDomain: "streamhub-app-5aa0e.firebaseapp.com",
-    projectId: "streamhub-app-5aa0e",
-    storageBucket: "streamhub-app-5aa0e.firebasestorage.app",
-    messagingSenderId: "728979558000",
-    appId: "1:728979558000:web:293b0114fe0d2201e1aeb5"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-let currentUser = null;
-let currentSection = 'dashboard';
-let isGuest = false;
-
-// Verificar si es admin
-async function isAdmin(email) {
-    const doc = await db.collection('admin').doc('config').get();
-    if (doc.exists && doc.data().adminEmail === email) return true;
-    return email === 'admin@streamhub.com';
-}
-
-// Cargar estadísticas
-async function loadStats() {
-    const users = await db.collection('users').get();
-    const hosts = await db.collection('users').where('isHost', '==', true).get();
-    const codes = await db.collection('codes').where('used', '==', false).get();
-    const movies = await db.collection('movies').get();
-    const series = await db.collection('series').get();
-    
-    document.getElementById('stats').innerHTML = `
-        <div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
-        <div class="stat-card"><h2>${hosts.size}</h2><p>Anfitriones</p></div>
-        <div class="stat-card"><h2>${codes.size}</h2><p>Códigos</p></div>
-        <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>
-    `;
-    
-    let recentHtml = '';
-    const recent = [];
-    users.forEach(doc => recent.push(doc.data().email));
-    recent.slice(-5).reverse().forEach(email => {
-        recentHtml += `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">📧 ${email}</div>`;
-    });
-    document.getElementById('recentUsers').innerHTML = recentHtml || 'No hay usuarios';
-}
-
-// Cargar usuarios
-async function loadUsers() {
-    const users = await db.collection('users').get();
-    let html = '';
-    users.forEach(doc => {
-        const u = doc.data();
-        html += `<tr>
-            <td>${u.email}</td>
-            <td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
-            <td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-            <td>
-                <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})" style="padding:5px 10px;">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="padding:5px 10px; background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
-}
-
-// Cargar películas
-async function loadMovies() {
-    const snapshot = await db.collection('movies').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const m = doc.data();
-        html += `<tr><td>${m.title || ''}</td><td>${m.genre || ''}</td><td>${m.year || ''}</td>
-        <td><button onclick="deleteItem('movies', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
-    });
-    document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4">No hay películas</td></tr>';
-}
-
-// Cargar series
-async function loadSeries() {
-    const snapshot = await db.collection('series').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const s = doc.data();
-        html += `<tr><td>${s.title || ''}</td><td>${s.genre || ''}</td><td>${s.seasons || 0}</td>
-        <td><button onclick="deleteItem('series', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
-    });
-    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="4">No hay series</td></tr>';
-}
-
-// Cargar música
-async function loadMusic() {
-    const snapshot = await db.collection('music').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const m = doc.data();
-        html += `<tr><td>${m.title || ''}</td><td>${m.artist || ''}</td><td>${m.album || ''}</td>
-        <td><button onclick="deleteItem('music', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
-    });
-    document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="4">No hay música</td></tr>';
-}
-
-// Cargar radios
-async function loadRadios() {
-    const snapshot = await db.collection('radios').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const r = doc.data();
-        html += `<tr><td>${r.name || ''}</td><td>${r.country || ''}</td><td>${r.genre || ''}</td>
-        <td><button onclick="deleteItem('radios', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
-    });
-    document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
-}
-
-// Cargar códigos
-async function loadCodes() {
-    const snapshot = await db.collection('codes').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const c = doc.data();
-        html += `<tr><td><code>${doc.id}</code></td>
-        <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-        <td><button onclick="deleteCode('${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button></td></tr>`;
-    });
-    document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
-}
-
-// Acciones
-window.toggleUserStatus = async (uid, isActive) => {
-    if (isGuest) { alert('Modo invitado: no se pueden hacer cambios'); return; }
-    await db.collection('users').doc(uid).update({ active: !isActive });
-    loadUsers(); loadStats();
-};
-
-window.toggleUserHost = async (uid, isHost) => {
-    if (isGuest) { alert('Modo invitado: no se pueden hacer cambios'); return; }
-    await db.collection('users').doc(uid).update({ isHost: !isHost });
-    loadUsers(); loadStats();
-};
-
-window.deleteItem = async (type, id) => {
-    if (isGuest) { alert('Modo invitado: no se pueden eliminar'); return; }
-    if (confirm('¿Eliminar permanentemente?')) {
-        await db.collection(type).doc(id).delete();
-        refreshCurrentSection();
-    }
-};
-
-window.deleteCode = async (codeId) => {
-    if (isGuest) { alert('Modo invitado: no se pueden eliminar'); return; }
-    if (confirm('¿Eliminar este código?')) {
-        await db.collection('codes').doc(codeId).delete();
-        loadCodes(); loadStats();
-    }
-};
-
-function refreshCurrentSection() {
-    if (currentSection === 'users') loadUsers();
-    else if (currentSection === 'movies') loadMovies();
-    else if (currentSection === 'series') loadSeries();
-    else if (currentSection === 'music') loadMusic();
-    else if (currentSection === 'radios') loadRadios();
-    else if (currentSection === 'codes') loadCodes();
-    else if (currentSection === 'dashboard') loadStats();
-}
-
-window.showSection = (section) => {
-    currentSection = section;
-    document.querySelectorAll('#adminPanel .card').forEach(c => c.classList.add('hidden'));
-    const sections = {
-        'dashboard': 'dashboardSection',
-        'users': 'usersSection', 
-        'movies': 'moviesSection',
-        'series': 'seriesSection',
-        'music': 'musicSection',
-        'radios': 'radiosSection',
-        'codes': 'codesSection'
+    // Configuración de Firebase (MISMA que en el admin)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDvfEZydbSdzZlN93WVnUnGXWdhk11xngQ",
+        authDomain: "streamhub-app-5aa0e.firebaseapp.com",
+        projectId: "streamhub-app-5aa0e",
+        storageBucket: "streamhub-app-5aa0e.firebasestorage.app",
+        messagingSenderId: "728979558000",
+        appId: "1:728979558000:web:293b0114fe0d2201e1aeb5"
     };
-    document.getElementById(sections[section]).classList.remove('hidden');
-    refreshCurrentSection();
-};
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-// Generar código
-async function generateNewCode() {
-    if (isGuest) { alert('Modo invitado: no se pueden generar códigos'); return; }
-    const codeId = 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    await db.collection('codes').doc(codeId).set({
-        ownerId: 'admin',
-        used: false,
-        createdAt: new Date()
-    });
-    alert(`✅ Código generado: ${codeId}`);
-    loadCodes(); loadStats();
-}
-
-// Agregar contenido simple
-function addSimpleContent(type) {
-    if (isGuest) { alert('Modo invitado: no se puede agregar'); return; }
-    const title = prompt('Título:');
-    if (!title) return;
-    const newId = db.collection(type).doc().id;
-    const data = { title: title };
-    if (type === 'movies') data.genre = 'General', data.year = '2024';
-    if (type === 'series') data.genre = 'General', data.seasons = 1;
-    if (type === 'music') data.artist = 'Desconocido', data.album = 'Single';
-    if (type === 'radios') data.country = 'Internacional', data.genre = 'General';
-    db.collection(type).doc(newId).set(data).then(() => refreshCurrentSection());
-}
-
-// Login
-document.getElementById('loginBtn').onclick = async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    try {
-        const cred = await auth.signInWithEmailAndPassword(email, password);
-        if (await isAdmin(email)) {
-            currentUser = cred.user;
-            isGuest = false;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('adminPanel').classList.remove('hidden');
-            document.getElementById('userEmail').innerText = email;
-            loadStats();
-        } else {
-            document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').innerText = 'No eres administrador';
-            await auth.signOut();
-        }
-    } catch(e) {
-        document.getElementById('loginError').style.display = 'block';
-        document.getElementById('loginError').innerText = e.message;
+    // Función para obtener usuario actual
+    async function getCurrentUser() {
+        const saved = localStorage.getItem('streamhub_user');
+        if (!saved) return null;
+        const userData = JSON.parse(saved);
+        if (!userData.uid) return null;
+        const doc = await db.collection('users').doc(userData.uid).get();
+        if (doc.exists) return { uid: userData.uid, email: userData.email, ...doc.data() };
+        return null;
     }
-};
 
-document.getElementById('guestBtn').onclick = () => {
-    isGuest = true;
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('adminPanel').classList.remove('hidden');
-    document.getElementById('userEmail').innerText = 'Invitado (solo lectura)';
-    loadStats();
-};
+    async function loadUserRole() {
+        const user = await getCurrentUser();
+        if (!user) {
+            localStorage.removeItem('streamhub_user');
+            window.location.href = 'go:login';
+            return;
+        }
+        const roleBadge = document.getElementById('userRoleBadge');
+        if (user.isHost) {
+            roleBadge.innerText = 'Anfitrión';
+            roleBadge.style.background = '#8b5cf6';
+        } else {
+            roleBadge.innerText = 'Cliente';
+            roleBadge.style.background = '#3b82f6';
+        }
+    }
 
-document.getElementById('logoutBtn').onclick = async () => {
-    await auth.signOut();
-    location.reload();
-};
+    // Renderizar contenido desde Firebase
+    function renderContent(containerId, items, type) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        if (!items || items.length === 0) {
+            container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px;">📭 Próximamente más contenido</div>`;
+            return;
+        }
+        
+        let html = '';
+        items.forEach(item => {
+            let imageUrl = item.imageUrl || '';
+            let title = item.title || item.name || 'Sin título';
+            let url = '';
+            
+            // Determinar URL según el tipo
+            if (type === 'movies' || type === 'series') {
+                url = item.videoUrl || '#';
+            } else if (type === 'music') {
+                url = item.audioUrl || item.videoUrl || '#';
+            } else if (type === 'radios') {
+                url = item.streamUrl || '#';
+            } else if (type === 'musicVideos') {
+                url = item.videoUrl || '#';
+            }
+            
+            html += `
+                <div class="content-card" onclick="window.open('${url}', '_blank')">
+                    <div class="card-image" style="${imageUrl ? `background-image: url('${imageUrl}'); background-size: cover;` : ''}">
+                        ${!imageUrl ? `<div class="card-icon">${getIconForType(type)}</div>` : ''}
+                    </div>
+                    <div class="card-title">${escapeHtml(title)}</div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
 
-document.getElementById('refreshUsers').onclick = loadUsers;
-document.getElementById('addMovie').onclick = () => addSimpleContent('movies');
-document.getElementById('addSerie').onclick = () => addSimpleContent('series');
-document.getElementById('addMusic').onclick = () => addSimpleContent('music');
-document.getElementById('addRadio').onclick = () => addSimpleContent('radios');
-document.getElementById('generateCode').onclick = generateNewCode;
+    function getIconForType(type) {
+        const icons = {
+            'movies': '🎬',
+            'series': '📺',
+            'music': '🎵',
+            'radios': '📻',
+            'musicVideos': '🎤'
+        };
+        return icons[type] || '🎬';
+    }
 
-// Inicializar configuración admin
-db.collection('admin').doc('config').get().then(doc => {
-    if (!doc.exists) db.collection('admin').doc('config').set({ adminEmail: 'admin@streamhub.com' });
-});
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-// Crear colecciones si no existen
-['movies', 'series', 'music', 'radios', 'codes', 'users'].forEach(col => {
-    db.collection(col).limit(1).get();
-});
+    // Cargar todo el contenido desde Firebase
+    async function loadContent() {
+        // Películas
+        const moviesSnapshot = await db.collection('movies').limit(12).get();
+        const movies = moviesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderContent('moviesGrid', movies, 'movies');
+        
+        // Series
+        const seriesSnapshot = await db.collection('series').limit(12).get();
+        const series = seriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderContent('seriesGrid', series, 'series');
+        
+        // Música
+        const musicSnapshot = await db.collection('music').limit(12).get();
+        const music = musicSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderContent('musicGrid', music, 'music');
+        
+        // Radios
+        const radiosSnapshot = await db.collection('radios').limit(12).get();
+        const radios = radiosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderContent('radiosGrid', radios, 'radios');
+        
+        // Videos Musicales
+        const videosSnapshot = await db.collection('musicVideos').limit(12).get();
+        const videos = videosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderContent('videosGrid', videos, 'musicVideos');
+    }
+
+    // Eventos
+    document.getElementById('btnLogout').onclick = async () => {
+        await auth.signOut();
+        localStorage.removeItem('streamhub_user');
+        window.location.href = 'go:login';
+    };
+
+    document.getElementById('menuBtn').onclick = (e) => {
+        e.stopPropagation();
+        const menu = document.getElementById('dropdownMenu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    };
+    
+    document.addEventListener('click', () => {
+        document.getElementById('dropdownMenu').style.display = 'none';
+    });
+    
+    // Redirecciones (cambia las URLs según tu app)
+    document.getElementById('verPeliculasLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'go:peliculas';
+    });
+    document.getElementById('verSeriesLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'go:series';
+    });
+    document.getElementById('verMusicaLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'go:musica';
+    });
+    document.getElementById('verRadiosLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'go:radios';
+    });
+    document.getElementById('verVideosLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'go:videos-musicales';
+    });
+    
+    // Inicializar
+    window.addEventListener('DOMContentLoaded', async () => {
+        await loadUserRole();
+        await loadContent();
+    });
 </script>
 </body>
 </html>
