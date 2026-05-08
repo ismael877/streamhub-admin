@@ -24,7 +24,7 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        input, textarea {
+        input, textarea, select {
             padding: 12px 20px;
             border-radius: 40px;
             border: none;
@@ -35,6 +35,7 @@
             border: 1px solid rgba(255,255,255,0.2);
             color: white;
         }
+        textarea { border-radius: 20px; resize: vertical; }
         button {
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
             color: white;
@@ -58,13 +59,15 @@
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
         .stat-card { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; text-align: center; }
         .stat-card h2 { font-size: 2rem; color: #c084fc; }
+        
+        /* Modal estilos */
         .modal {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             display: none;
             align-items: center;
             justify-content: center;
@@ -74,13 +77,40 @@
             background: #1e293b;
             border-radius: 24px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 550px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
         }
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #c084fc;
+        }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: #94a3b8; }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group { flex: 1; }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button { flex: 1; }
+        .image-preview {
+            width: 100%;
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            background-color: #0f172a;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><circle cx="8.5" cy="8.5" r="2.5"/><path d="M21 15l-5-4-3 3-4-4-5 5"/></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+        }
     </style>
 </head>
 <body>
@@ -137,13 +167,13 @@
         <!-- Series -->
         <div id="seriesSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📺 Series</h2><button id="addSerieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"></table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
         </div>
 
         <!-- Música -->
         <div id="musicSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"></table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
         </div>
 
         <!-- Radios -->
@@ -155,25 +185,25 @@
         <!-- Videos Musicales -->
         <div id="musicVideosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><td><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
         </div>
 
         <!-- Códigos -->
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos de invitación</h2>
             <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
-            <div style="overflow-x: auto;"><td><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
         </div>
     </div>
 </div>
 
-<!-- Modal (INICIA OCULTO) -->
+<!-- Modal para agregar/editar contenido (formulario completo) -->
 <div id="contentModal" class="modal">
     <div class="modal-content">
         <h3 id="modalTitle">Agregar Contenido</h3>
         <div id="modalFields"></div>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="saveContentBtn">💾 Guardar</button>
+        <div class="modal-buttons">
+            <button id="saveContentBtn" class="success">💾 Guardar</button>
             <button id="closeModalBtn">Cancelar</button>
         </div>
     </div>
@@ -197,6 +227,8 @@ const db = firebase.firestore();
 let currentUser = null;
 let currentSection = 'dashboard';
 let isGuest = false;
+let currentEditType = null;
+let currentEditId = null;
 
 // Verificar admin
 async function isAdmin(email) {
@@ -245,10 +277,10 @@ async function loadUsers() {
             </td>
         </tr>`;
     });
-    document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
+    document.getElementById('usersTable').innerHTML = html || '<table><td colspan="4">No hay usuarios</td></tr>';
 }
 
-// Cargar colecciones
+// Cargar películas
 async function loadMovies() {
     const snapshot = await db.collection('movies').get();
     let html = '';
@@ -258,13 +290,16 @@ async function loadMovies() {
             <td>${data.title || '—'}</td>
             <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
             <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-            <td><button onclick="editItem('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
+            <td>
+                <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
+            </td>
         </tr>`;
     });
     document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4">No hay películas</td></tr>';
 }
 
+// Cargar series
 async function loadSeries() {
     const snapshot = await db.collection('series').get();
     let html = '';
@@ -274,13 +309,16 @@ async function loadSeries() {
             <td>${data.title || '—'}</td>
             <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
             <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-            <td><button onclick="editItem('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
+            <td>
+                <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button>
+            </td>
+        </td>`;
     });
-    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="4">No hay series</td></tr>';
+    document.getElementById('seriesTable').innerHTML = html || '</table><td colspan="4">No hay series</td></tr>';
 }
 
+// Cargar música
 async function loadMusic() {
     const snapshot = await db.collection('music').get();
     let html = '';
@@ -291,29 +329,35 @@ async function loadMusic() {
             <td>${data.artist || '—'}</td>
             <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
             <td>${data.audioUrl ? data.audioUrl.substring(0,40)+'...' : '—'}</td>
-            <td><button onclick="editItem('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
+            <td>
+                <button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button>
+            </td>
         </tr>`;
     });
     document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
 }
 
+// Cargar radios
 async function loadRadios() {
     const snapshot = await db.collection('radios').get();
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<table>
+        html += `<tr>
             <td>${data.name || '—'}</td>
             <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
             <td>${data.streamUrl ? data.streamUrl.substring(0,40)+'...' : '—'}</td>
-            <td><button onclick="editItem('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
+            <td>
+                <button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button>
+            </td>
         </tr>`;
     });
     document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
 }
 
+// Cargar videos musicales
 async function loadMusicVideos() {
     const snapshot = await db.collection('musicVideos').get();
     let html = '';
@@ -324,13 +368,16 @@ async function loadMusicVideos() {
             <td>${data.artist || '—'}</td>
             <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
             <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-            <td><button onclick="editItem('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
+            <td>
+                <button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button>
+            </td>
         </tr>`;
     });
-    document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
+    document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales<tr></tr>';
 }
 
+// Cargar códigos
 async function loadCodes() {
     const snapshot = await db.collection('codes').get();
     let html = '';
@@ -343,6 +390,178 @@ async function loadCodes() {
         </tr>`;
     });
     document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
+}
+
+// Abrir modal para EDITAR
+window.openEditModal = async (type, id) => {
+    if (isGuest) { alert('Modo invitado'); return; }
+    const doc = await db.collection(type).doc(id).get();
+    if (doc.exists) {
+        currentEditType = type;
+        currentEditId = id;
+        showFormModal(type, doc.data());
+    }
+};
+
+// Abrir modal para AGREGAR NUEVO
+function openAddModal(type) {
+    if (isGuest) { alert('Modo invitado'); return; }
+    currentEditType = type;
+    currentEditId = null;
+    showFormModal(type, {});
+}
+
+// Mostrar formulario modal
+function showFormModal(type, data) {
+    const modal = document.getElementById('contentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    
+    let fieldsHtml = '';
+    
+    if (type === 'movies') {
+        modalTitle.innerText = '🎬 ' + (currentEditId ? 'Editar Película' : 'Nueva Película');
+        fieldsHtml = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: Duna 2"></div>
+            <div class="form-group"><label>URL de la Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL del Video / Enlace</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+            <div class="form-row">
+                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}" placeholder="2024"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Acción, Drama..."></div>
+            </div>
+        `;
+    } else if (type === 'series') {
+        modalTitle.innerText = '📺 ' + (currentEditId ? 'Editar Serie' : 'Nueva Serie');
+        fieldsHtml = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: The Last of Us"></div>
+            <div class="form-group"><label>URL de la Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL del Video / Enlace</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+            <div class="form-row">
+                <div class="form-group"><label>Temporadas</label><input id="edit_seasons" value="${escapeHtml(data.seasons || '')}" placeholder="1"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Drama, Ciencia Ficción..."></div>
+            </div>
+        `;
+    } else if (type === 'music') {
+        modalTitle.innerText = '🎵 ' + (currentEditId ? 'Editar Canción' : 'Nueva Canción');
+        fieldsHtml = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: TQG"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}" placeholder="Ej: Karol G, Shakira"></div>
+            <div class="form-group"><label>URL de la Imagen (Álbum)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://i.scdn.co/image/..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL del Audio/Video</label><input id="edit_audioUrl" value="${escapeHtml(data.audioUrl || data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+        `;
+    } else if (type === 'radios') {
+        modalTitle.innerText = '📻 ' + (currentEditId ? 'Editar Radio' : 'Nueva Radio');
+        fieldsHtml = `
+            <div class="form-group"><label>Nombre *</label><input id="edit_name" value="${escapeHtml(data.name || '')}" placeholder="Ej: LOS40"></div>
+            <div class="form-group"><label>URL del Stream</label><input id="edit_streamUrl" value="${escapeHtml(data.streamUrl || '')}" placeholder="https://playerservices.streamtheworld.com/..."></div>
+            <div class="form-group"><label>URL del Logo/Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://ejemplo.com/logo.png"></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-row">
+                <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}" placeholder="España, México..."></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Música, Noticias..."></div>
+            </div>
+        `;
+    } else if (type === 'musicVideos') {
+        modalTitle.innerText = '🎤 ' + (currentEditId ? 'Editar Video Musical' : 'Nuevo Video Musical');
+        fieldsHtml = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: Shakira - BZRP"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}" placeholder="Ej: Shakira, Bizarrap"></div>
+            <div class="form-group"><label>URL de la Imagen (Miniatura)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://i.ytimg.com/vi/.../hqdefault.jpg"></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL del Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+        `;
+    }
+    
+    modalFields.innerHTML = fieldsHtml;
+    
+    // Previsualización de imagen
+    const imageInput = document.getElementById('edit_imageUrl');
+    const preview = document.getElementById('imagePreview');
+    if (imageInput) {
+        const updatePreview = () => {
+            if (imageInput.value) {
+                preview.style.backgroundImage = `url('${imageInput.value}')`;
+                preview.style.backgroundSize = 'cover';
+            } else {
+                preview.style.backgroundImage = '';
+            }
+        };
+        imageInput.oninput = updatePreview;
+        updatePreview();
+    }
+    
+    modal.style.display = 'flex';
+}
+
+// Guardar contenido (nuevo o edición)
+async function saveContent() {
+    if (!currentEditType) return;
+    if (isGuest) { alert('Modo invitado'); closeModal(); return; }
+    
+    const type = currentEditType;
+    const id = currentEditId || db.collection(type).doc().id;
+    const updateData = { updatedAt: new Date() };
+    
+    if (type === 'movies') {
+        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+        if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
+        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+    } else if (type === 'series') {
+        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+        if (document.getElementById('edit_seasons')?.value) updateData.seasons = document.getElementById('edit_seasons').value;
+        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+    } else if (type === 'music') {
+        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
+    } else if (type === 'radios') {
+        updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
+        if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
+        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+    } else if (type === 'musicVideos') {
+        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+    }
+    
+    // Si no hay id (nuevo), crear el documento
+    if (!currentEditId) {
+        updateData.createdAt = new Date();
+        await db.collection(type).doc(id).set(updateData);
+    } else {
+        await db.collection(type).doc(id).set(updateData, { merge: true });
+    }
+    
+    alert('✅ Guardado correctamente');
+    closeModal();
+    refreshCurrentSection();
+}
+
+function closeModal() {
+    document.getElementById('contentModal').style.display = 'none';
+    currentEditType = null;
+    currentEditId = null;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 // Acciones
@@ -360,7 +579,7 @@ window.toggleUserHost = async (uid, isHost) => {
 
 window.deleteItem = async (type, id) => {
     if (isGuest) { alert('Modo invitado'); return; }
-    if (confirm('¿Eliminar permanentemente?')) {
+    if (confirm('¿Eliminar permanentemente este contenido?')) {
         await db.collection(type).doc(id).delete();
         refreshCurrentSection();
     }
@@ -373,183 +592,6 @@ window.deleteCode = async (codeId) => {
         loadCodes(); loadStats();
     }
 };
-
-// Editar item
-window.editItem = async (type, id) => {
-    if (isGuest) { alert('Modo invitado'); return; }
-    const doc = await db.collection(type).doc(id).get();
-    if (doc.exists) {
-        const data = doc.data();
-        const modal = document.getElementById('contentModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalFields = document.getElementById('modalFields');
-        
-        let fieldsHtml = '';
-        
-        if (type === 'movies') {
-            modalTitle.innerText = '🎬 Película';
-            fieldsHtml = `
-                <div class="form-group"><label>Título</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-                <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
-            `;
-        } else if (type === 'series') {
-            modalTitle.innerText = '📺 Serie';
-            fieldsHtml = `
-                <div class="form-group"><label>Título</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-                <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-                <div class="form-group"><label>Temporadas</label><input id="edit_seasons" value="${escapeHtml(data.seasons || '')}"></div>
-            `;
-        } else if (type === 'music') {
-            modalTitle.innerText = '🎵 Canción';
-            fieldsHtml = `
-                <div class="form-group"><label>Título</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-                <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}"></div>
-                <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                <div class="form-group"><label>URL Audio</label><input id="edit_audioUrl" value="${escapeHtml(data.audioUrl || data.videoUrl || '')}"></div>
-            `;
-        } else if (type === 'radios') {
-            modalTitle.innerText = '📻 Radio';
-            fieldsHtml = `
-                <div class="form-group"><label>Nombre</label><input id="edit_name" value="${escapeHtml(data.name || '')}"></div>
-                <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" value="${escapeHtml(data.streamUrl || '')}"></div>
-                <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}"></div>
-            `;
-        } else if (type === 'musicVideos') {
-            modalTitle.innerText = '🎤 Video Musical';
-            fieldsHtml = `
-                <div class="form-group"><label>Título</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
-                <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}"></div>
-                <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
-                <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
-            `;
-        }
-        
-        modalFields.innerHTML = fieldsHtml;
-        modal.style.display = 'flex';
-        window.currentEditType = type;
-        window.currentEditId = id;
-    }
-};
-
-function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-// Guardar contenido
-async function saveContent() {
-    const type = window.currentEditType;
-    const id = window.currentEditId;
-    if (!type || !id) return;
-    if (isGuest) { alert('Modo invitado'); closeModal(); return; }
-    
-    const updateData = {};
-    
-    if (type === 'movies') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-    } else if (type === 'series') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        if (document.getElementById('edit_seasons')?.value) updateData.seasons = document.getElementById('edit_seasons').value;
-    } else if (type === 'music') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
-    } else if (type === 'radios') {
-        if (document.getElementById('edit_name')?.value) updateData.name = document.getElementById('edit_name').value;
-        if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
-    } else if (type === 'musicVideos') {
-        if (document.getElementById('edit_title')?.value) updateData.title = document.getElementById('edit_title').value;
-        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-    }
-    
-    await db.collection(type).doc(id).set(updateData, { merge: true });
-    alert('✅ Guardado');
-    closeModal();
-    refreshCurrentSection();
-}
-
-function addNewContent(type) {
-    if (isGuest) { alert('Modo invitado'); return; }
-    const newId = db.collection(type).doc().id;
-    window.currentEditType = type;
-    window.currentEditId = newId;
-    
-    const modal = document.getElementById('contentModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalFields = document.getElementById('modalFields');
-    
-    let fieldsHtml = '';
-    
-    if (type === 'movies') {
-        modalTitle.innerText = '🎬 Nueva Película';
-        fieldsHtml = `
-            <div class="form-group"><label>Título</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-        `;
-    } else if (type === 'series') {
-        modalTitle.innerText = '📺 Nueva Serie';
-        fieldsHtml = `
-            <div class="form-group"><label>Título</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>Temporadas</label><input id="edit_seasons" placeholder="1"></div>
-        `;
-    } else if (type === 'music') {
-        modalTitle.innerText = '🎵 Nueva Canción';
-        fieldsHtml = `
-            <div class="form-group"><label>Título</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Audio</label><input id="edit_audioUrl" placeholder="https://..."></div>
-        `;
-    } else if (type === 'radios') {
-        modalTitle.innerText = '📻 Nueva Radio';
-        fieldsHtml = `
-            <div class="form-group"><label>Nombre</label><input id="edit_name" placeholder="Nombre"></div>
-            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
-        `;
-    } else if (type === 'musicVideos') {
-        modalTitle.innerText = '🎤 Nuevo Video Musical';
-        fieldsHtml = `
-            <div class="form-group"><label>Título</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
-        `;
-    }
-    
-    modalFields.innerHTML = fieldsHtml;
-    modal.style.display = 'flex';
-}
-
-function closeModal() {
-    document.getElementById('contentModal').style.display = 'none';
-    window.currentEditType = null;
-    window.currentEditId = null;
-}
 
 function refreshCurrentSection() {
     if (currentSection === 'users') loadUsers();
@@ -625,11 +667,11 @@ document.getElementById('logoutBtn').onclick = async () => {
 };
 
 document.getElementById('refreshUsers').onclick = loadUsers;
-document.getElementById('addMovieBtn').onclick = () => addNewContent('movies');
-document.getElementById('addSerieBtn').onclick = () => addNewContent('series');
-document.getElementById('addMusicBtn').onclick = () => addNewContent('music');
-document.getElementById('addRadioBtn').onclick = () => addNewContent('radios');
-document.getElementById('addMusicVideoBtn').onclick = () => addNewContent('musicVideos');
+document.getElementById('addMovieBtn').onclick = () => openAddModal('movies');
+document.getElementById('addSerieBtn').onclick = () => openAddModal('series');
+document.getElementById('addMusicBtn').onclick = () => openAddModal('music');
+document.getElementById('addRadioBtn').onclick = () => openAddModal('radios');
+document.getElementById('addMusicVideoBtn').onclick = () => openAddModal('musicVideos');
 document.getElementById('generateCode').onclick = generateNewCode;
 
 document.getElementById('saveContentBtn').onclick = saveContent;
