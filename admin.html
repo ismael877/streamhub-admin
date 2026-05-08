@@ -43,7 +43,9 @@
             padding: 10px 20px;
             border-radius: 40px;
             border: none;
+            transition: transform 0.2s;
         }
+        button:hover { transform: scale(1.02); }
         button.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
         button.success { background: linear-gradient(90deg, #10b981, #059669); }
         button.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
@@ -113,11 +115,7 @@
         .search-result-item:hover { background: #334155; }
         .loading-text { text-align: center; padding: 20px; color: #94a3b8; }
         
-        .seasons-container {
-            margin-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 20px;
-        }
+        .seasons-container { margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 20px; }
         .season-card {
             background: rgba(0,0,0,0.4);
             border-radius: 20px;
@@ -196,19 +194,12 @@
             font-size: 14px;
             color: #94a3b8;
         }
-        .manual-add-section {
-            background: rgba(0,0,0,0.3);
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        .episode-input-row {
+        .search-box {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
-        .episode-input-row input { margin-bottom: 0; }
+        .search-box input { flex: 1; margin-bottom: 0; }
     </style>
 </head>
 <body>
@@ -226,7 +217,7 @@
     <!-- Panel Principal -->
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Importación Automática</span></h1>
+            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Con Vimeus + TMDB</span></h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
 
@@ -291,13 +282,15 @@
     <div class="modal-content">
         <h3>🤖 Importación Automática de Serie</h3>
         <div class="form-group">
-            <label>🔍 Buscar serie en TMDB</label>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Breaking Bad, The Walking Dead..." style="flex: 1;">
-                <button id="searchSerieBtn" class="info">Buscar</button>
+            <label>🔍 Buscar serie en TMDB (funciona siempre)</label>
+            <div class="search-box">
+                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Breaking Bad, The Walking Dead..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
+                <button id="searchSerieBtn" class="info" onclick="searchSeriesAndShow()">Buscar</button>
             </div>
         </div>
-        <div id="searchResults" class="search-results"></div>
+        <div id="searchResults" class="search-results">
+            <div class="loading-text">🔍 Escribe el nombre de una serie y haz clic en Buscar</div>
+        </div>
         
         <div id="importProgressArea" style="display: none;">
             <div class="progress-container">
@@ -340,30 +333,27 @@ const db = firebase.firestore();
 let currentUser = null;
 let currentSection = 'dashboard';
 let isGuest = false;
+let currentEditType = null;
+let currentEditId = null;
 
 // ==================== CONFIGURACIÓN DE APIS ====================
 const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
-const VIMEUS_API_KEY = "ak_aqxyOEsSQGl2kadq0QYzO2jTVCUaVV8J";
 const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
-
-// Proxies CORS para Vimeus API
-const CORS_PROXIES = [
-    "https://cors-anywhere.herokuapp.com/",
-    "https://api.allorigins.win/raw?url=",
-    "https://corsproxy.io/?",
-    "https://proxy.cors.sh/"
-];
 
 // ==================== FUNCIONES TMDB ====================
 async function searchTMDB(query, type = 'tv') {
     const url = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
+    console.log('Buscando en TMDB:', url);
+    
     try {
         const response = await fetch(url);
         const data = await response.json();
+        console.log('Resultados TMDB:', data.results?.length || 0);
         return data.results || [];
     } catch (error) {
         console.error('Error buscando en TMDB:', error);
+        showToast('Error al buscar en TMDB', true);
         return [];
     }
 }
@@ -379,7 +369,7 @@ async function getTMDBDetails(tmdbId, type = 'tv') {
     }
 }
 
-async function getTMDBSeasons(tmdbId, seasonNumber) {
+async function getTMDBSeasonEpisodes(tmdbId, seasonNumber) {
     const url = `https://api.themoviedb.org/3/tv/${tmdbId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}&language=es`;
     try {
         const response = await fetch(url);
@@ -391,53 +381,7 @@ async function getTMDBSeasons(tmdbId, seasonNumber) {
     }
 }
 
-// ==================== FUNCIONES VIMEUS API ====================
-async function fetchVimeusSeriesEpisodes(tmdbId) {
-    for (const proxy of CORS_PROXIES) {
-        try {
-            const url = `${proxy}https://vimeus.com/api/listing/episodes?tmdb_id=${tmdbId}`;
-            console.log(`Intentando con proxy: ${proxy}`);
-            
-            const response = await fetch(url, {
-                headers: { 'X-API-Key': VIMEUS_API_KEY }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.error === false && data.data && data.data.result) {
-                    console.log(`✅ Éxito con proxy: ${proxy}`);
-                    return data.data.result;
-                }
-            }
-        } catch (error) {
-            console.log(`Proxy ${proxy} falló:`, error.message);
-        }
-    }
-    return [];
-}
-
-async function fetchVimeusSerieInfo(tmdbId) {
-    for (const proxy of CORS_PROXIES) {
-        try {
-            const url = `${proxy}https://vimeus.com/api/listing/series?tmdb_id=${tmdbId}`;
-            const response = await fetch(url, {
-                headers: { 'X-API-Key': VIMEUS_API_KEY }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.error === false && data.data && data.data.result) {
-                    return data.data.result[0];
-                }
-            }
-        } catch (error) {
-            console.log(`Error obteniendo info de serie:`, error);
-        }
-    }
-    return null;
-}
-
-// ==================== IMPORTACIÓN AUTOMÁTICA COMPLETA ====================
+// ==================== FUNCIÓN PRINCIPAL DE IMPORTACIÓN ====================
 async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, overview) {
     const progressDiv = document.getElementById('importProgressArea');
     const progressBar = document.getElementById('importProgress');
@@ -450,88 +394,64 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
     
     // Obtener detalles de TMDB
     const tmdbDetails = await getTMDBDetails(tmdbId, 'tv');
-    const totalSeasons = tmdbDetails?.number_of_seasons || 1;
+    if (!tmdbDetails) {
+        showToast('Error al obtener detalles de la serie', true);
+        progressDiv.style.display = 'none';
+        return;
+    }
+    
+    const totalSeasons = tmdbDetails.number_of_seasons || 1;
     const seasonsData = [];
     
-    progressBar.value = 15;
-    progressStatus.innerText = `Buscando episodios en Vimeus para ${totalSeasons} temporadas...`;
+    progressBar.value = 20;
+    progressStatus.innerText = `La serie tiene ${totalSeasons} temporadas. Obteniendo episodios...`;
     
-    // Intentar obtener episodios de Vimeus
-    let vimeusEpisodes = await fetchVimeusSeriesEpisodes(tmdbId);
-    
-    progressBar.value = 30;
-    progressStatus.innerText = `Organizando ${vimeusEpisodes.length} episodios encontrados...`;
-    
-    // Organizar episodios por temporada
-    const episodesBySeason = {};
-    for (const ep of vimeusEpisodes) {
-        const seasonNum = ep.season;
-        if (!episodesBySeason[seasonNum]) {
-            episodesBySeason[seasonNum] = [];
-        }
-        episodesBySeason[seasonNum].push({
-            number: ep.episode,
-            title: ep.title || `Episodio ${ep.episode}`,
-            videoUrl: `https://vimeus.com/e/serie?tmdb=${tmdbId}&se=${ep.season}&ep=${ep.episode}&view_key=${VIMEUS_VIEW_KEY}`,
-            season: ep.season
-        });
-    }
-    
-    // Ordenar episodios por número dentro de cada temporada
-    for (const seasonNum in episodesBySeason) {
-        episodesBySeason[seasonNum].sort((a, b) => a.number - b.number);
-    }
-    
-    // Construir estructura de temporadas
-    progressBar.value = 50;
-    progressStatus.innerText = `Creando estructura de temporadas...`;
-    
+    // Obtener episodios de cada temporada desde TMDB
     for (let s = 1; s <= totalSeasons; s++) {
-        const seasonEpisodes = episodesBySeason[s] || [];
+        progressStatus.innerText = `Obteniendo episodios de temporada ${s}...`;
+        progressBar.value = 20 + Math.floor((s / totalSeasons) * 60);
         
-        // Si no hay episodios de Vimeus, intentar obtener de TMDB
-        if (seasonEpisodes.length === 0) {
-            progressStatus.innerText = `Obteniendo episodios de temporada ${s} desde TMDB...`;
-            const tmdbEpisodes = await getTMDBSeasons(tmdbId, s);
-            for (const ep of tmdbEpisodes) {
-                seasonEpisodes.push({
-                    number: ep.episode_number,
-                    title: ep.name || `Episodio ${ep.episode_number}`,
-                    videoUrl: `https://vimeus.com/e/serie?tmdb=${tmdbId}&se=${s}&ep=${ep.episode_number}&view_key=${VIMEUS_VIEW_KEY}`,
-                    season: s
-                });
-            }
-            // Pequeña pausa para no sobrecargar la API
-            await new Promise(r => setTimeout(r, 100));
+        const tmdbEpisodes = await getTMDBSeasonEpisodes(tmdbId, s);
+        const seasonEpisodes = [];
+        
+        for (const ep of tmdbEpisodes) {
+            seasonEpisodes.push({
+                number: ep.episode_number,
+                title: ep.name || `Episodio ${ep.episode_number}`,
+                videoUrl: `https://vimeus.com/e/serie?tmdb=${tmdbId}&se=${s}&ep=${ep.episode_number}&view_key=${VIMEUS_VIEW_KEY}`,
+                season: s
+            });
         }
         
         seasonEpisodes.sort((a, b) => a.number - b.number);
         
         seasonsData.push({
             number: s,
-            title: `Temporada ${s}`,
+            title: tmdbDetails.seasons?.find(sea => sea.season_number === s)?.name || `Temporada ${s}`,
             episodes: seasonEpisodes
         });
         
         const totalEpisodios = seasonsData.reduce((acc, sea) => acc + sea.episodes.length, 0);
         progressCount.innerText = `${totalEpisodios} episodios en ${s} temporadas`;
-        progressBar.value = 50 + Math.floor((s / totalSeasons) * 40);
+        
+        // Pequeña pausa para no saturar la API
+        await new Promise(r => setTimeout(r, 200));
     }
     
-    progressBar.value = 90;
+    progressBar.value = 85;
     progressStatus.innerText = `Guardando en Firebase...`;
     
     // Generar URL general de la serie
     const generalEmbedUrl = `https://vimeus.com/e/serie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
-    const year = tmdbDetails?.first_air_date?.substring(0,4) || '';
-    const genres = tmdbDetails?.genres?.map(g => g.name).join(', ') || '';
+    const year = tmdbDetails.first_air_date?.substring(0,4) || '';
+    const genres = tmdbDetails.genres?.map(g => g.name).join(', ') || '';
     
     const serieData = {
         tmdbId: tmdbId,
         title: titulo,
         imageUrl: posterPath,
         backdropUrl: backdropPath,
-        overview: overview || tmdbDetails?.overview || '',
+        overview: overview || tmdbDetails.overview || '',
         year: year,
         genres: genres,
         videoUrl: generalEmbedUrl,
@@ -752,14 +672,15 @@ window.viewSeriesDetails = async (docId) => {
         html += `</div></div>`;
     }
     
-    html += `<div class="manual-add-section"><h4>✏️ Agregar Manualmente</h4>
-        <div class="episode-input-row">
-            <input type="number" id="newSeasonNum" placeholder="Temporada" style="width:100px;">
-            <input type="number" id="newEpisodeNum" placeholder="Episodio" style="width:100px;">
-            <input type="text" id="newEpisodeTitle" placeholder="Título del episodio" style="flex:1;">
+    html += `<div class="manual-add-section" style="background:rgba(0,0,0,0.3);border-radius:16px;padding:20px;margin-top:20px;">
+        <h4>✏️ Agregar Episodio Manualmente</h4>
+        <div class="episode-input-row" style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+            <input type="number" id="newSeasonNum" placeholder="Temporada" style="width:100px;margin:0;">
+            <input type="number" id="newEpisodeNum" placeholder="Episodio" style="width:100px;margin:0;">
+            <input type="text" id="newEpisodeTitle" placeholder="Título del episodio" style="flex:1;margin:0;">
             <button onclick="addEpisodeManually('${docId}')" class="success">➕ Agregar</button>
         </div>
-        <p class="description" style="font-size:12px;color:#94a3b8;">Los episodios agregados manualmente generarán automáticamente la URL de Vimeus</p>
+        <p style="font-size:12px;color:#94a3b8;">La URL de Vimeus se genera automáticamente con el TMDB ID y la temporada/episodio</p>
     </div></div>`;
     
     document.getElementById('seriesDetailContent').innerHTML = html;
@@ -798,7 +719,7 @@ window.addEpisodeManually = async (docId) => {
         return;
     }
     
-    // Agregar episodio
+    // Agregar episodio con URL de Vimeus generada automáticamente
     const tmdbId = data.tmdbId;
     const videoUrl = `https://vimeus.com/e/serie?tmdb=${tmdbId}&se=${seasonNum}&ep=${episodeNum}&view_key=${VIMEUS_VIEW_KEY}`;
     
@@ -826,7 +747,7 @@ window.addEpisodeManually = async (docId) => {
 };
 
 // ==================== IMPORTACIÓN UI ====================
-async function searchSeriesAndShow() {
+window.searchSeriesAndShow = async function() {
     const query = document.getElementById('searchSerieInput').value.trim();
     if (!query) {
         showToast('Ingresa un título para buscar', true);
@@ -839,7 +760,7 @@ async function searchSeriesAndShow() {
     const results = await searchTMDB(query, 'tv');
     
     if (results.length === 0) {
-        resultsDiv.innerHTML = '<div class="loading-text">❌ No se encontraron series</div>';
+        resultsDiv.innerHTML = '<div class="loading-text">❌ No se encontraron series. Prueba con otro nombre.</div>';
         return;
     }
     
@@ -855,31 +776,150 @@ async function searchSeriesAndShow() {
                 <div style="flex:1">
                     <strong>${escapeHtml(title)}</strong>
                     <div style="font-size:12px; color:#94a3b8;">${year} • TMDB ID: ${serie.id}</div>
-                    <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente todas las temporadas y episodios disponibles</div>
+                    <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente todas las temporadas y episodios</div>
                 </div>
-                <button style="background:#10b981; padding:8px 20px;">Importar</button>
+                <button style="background:#10b981; padding:8px 20px; cursor:pointer;">Importar</button>
             </div>
         `;
     }
     html += '</div>';
     resultsDiv.innerHTML = html;
-}
+};
 
-function openAutoImportModal() {
+window.openAutoImportModal = function() {
     if (isGuest) { showToast('Modo invitado no puede importar', true); return; }
     document.getElementById('importModal').style.display = 'flex';
-    document.getElementById('searchResults').innerHTML = '<div class="loading-text">🔍 Busca una serie para importar automáticamente</div>';
+    document.getElementById('searchResults').innerHTML = '<div class="loading-text">🔍 Escribe el nombre de una serie y haz clic en Buscar</div>';
     document.getElementById('searchSerieInput').value = '';
     document.getElementById('importProgressArea').style.display = 'none';
-}
+};
 
-function openAddModal(type) {
+window.openAddModal = function(type) {
     if (isGuest) { showToast('Modo invitado', true); return; }
-    showToast('Usa "Importar Automático" para series', true);
-}
+    currentEditType = type;
+    currentEditId = null;
+    
+    const modal = document.getElementById('contentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    
+    if (type === 'series') {
+        modalTitle.innerText = '📺 Nueva Serie (Manual)';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la serie"></div>
+            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 1399"></div>
+            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
+        `;
+        
+        const imageInput = document.getElementById('edit_imageUrl');
+        const preview = document.getElementById('imagePreview');
+        if (imageInput && preview) {
+            imageInput.oninput = () => {
+                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
+                else preview.style.backgroundImage = '';
+            };
+        }
+    } else if (type === 'movies') {
+        modalTitle.innerText = '🎬 Nueva Película';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3"></textarea></div>
+        `;
+        
+        const imageInput = document.getElementById('edit_imageUrl');
+        const preview = document.getElementById('imagePreview');
+        if (imageInput && preview) {
+            imageInput.oninput = () => {
+                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
+                else preview.style.backgroundImage = '';
+            };
+        }
+    } else if (type === 'music') {
+        modalTitle.innerText = '🎵 Nueva Canción';
+        modalFields.innerHTML = `<div class="form-group"><label>Título</label><input id="edit_title"></div><div class="form-group"><label>Artista</label><input id="edit_artist"></div><div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl"></div><div id="imagePreview" class="image-preview"></div><div class="form-group"><label>URL Audio</label><input id="edit_audioUrl"></div>`;
+    } else if (type === 'radios') {
+        modalTitle.innerText = '📻 Nueva Radio';
+        modalFields.innerHTML = `<div class="form-group"><label>Nombre</label><input id="edit_name"></div><div class="form-group"><label>URL Stream</label><input id="edit_streamUrl"></div><div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl"></div><div id="imagePreview" class="image-preview"></div><div class="form-group"><label>País</label><input id="edit_country"></div><div class="form-group"><label>Género</label><input id="edit_genre"></div>`;
+    }
+    
+    modal.style.display = 'flex';
+};
 
-async function saveContent() {
-    showToast('Usa "Importar Automático" para series', true);
+window.saveContent = async function() {
+    if (!currentEditType) return;
+    if (isGuest) { showToast('Modo invitado', true); closeModal(); return; }
+    
+    try {
+        const type = currentEditType;
+        const id = currentEditId || db.collection(type).doc().id;
+        const updateData = { updatedAt: new Date() };
+        
+        if (type === 'series') {
+            const tmdbId = document.getElementById('edit_tmdbId')?.value;
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (tmdbId) updateData.tmdbId = tmdbId;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genres = document.getElementById('edit_genre').value;
+            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+            
+            if (tmdbId) {
+                updateData.videoUrl = `https://vimeus.com/e/serie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+            }
+            updateData.seasons = [];
+            updateData.totalSeasons = 0;
+            updateData.totalEpisodes = 0;
+            
+        } else if (type === 'movies') {
+            const tmdbId = document.getElementById('edit_tmdbId')?.value;
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (tmdbId) updateData.tmdbId = tmdbId;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+            
+            if (tmdbId) {
+                updateData.videoUrl = `https://vimeus.com/e/movie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+            }
+            
+        } else if (type === 'music') {
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
+        } else if (type === 'radios') {
+            updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
+            if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+        }
+        
+        if (!currentEditId) updateData.createdAt = new Date();
+        
+        await db.collection(type).doc(id).set(updateData, { merge: true });
+        showToast('✅ Guardado correctamente');
+        closeModal();
+        refreshCurrentSection();
+    } catch (error) {
+        showToast('Error al guardar: ' + error.message, true);
+    }
+};
+
+function closeModal() {
+    document.getElementById('contentModal').style.display = 'none';
+    currentEditType = null;
+    currentEditId = null;
 }
 
 // ==================== ACCIONES ====================
@@ -957,8 +997,6 @@ async function generateNewCode() {
 
 // Exponer funciones globales
 window.importSerieCompleta = importSerieCompleta;
-window.openAutoImportModal = openAutoImportModal;
-window.searchSeriesAndShow = searchSeriesAndShow;
 
 // ==================== EVENT LISTENERS ====================
 document.getElementById('loginBtn').onclick = async () => {
@@ -966,7 +1004,10 @@ document.getElementById('loginBtn').onclick = async () => {
     const password = document.getElementById('password').value;
     try {
         const cred = await auth.signInWithEmailAndPassword(email, password);
-        if (await isAdmin(email)) {
+        const adminDoc = await db.collection('admin').doc('config').get();
+        const isAdminUser = (adminDoc.exists && adminDoc.data().adminEmail === email) || email === 'admin@streamhub.com';
+        
+        if (isAdminUser) {
             currentUser = cred.user;
             isGuest = false;
             document.getElementById('loginScreen').classList.add('hidden');
@@ -976,6 +1017,7 @@ document.getElementById('loginBtn').onclick = async () => {
             await loadUsers();
             await loadMovies();
             await loadSeries();
+            showToast('✅ Bienvenido ' + email);
         } else {
             document.getElementById('loginError').style.display = 'block';
             document.getElementById('loginError').innerText = 'No eres administrador';
@@ -987,12 +1029,6 @@ document.getElementById('loginBtn').onclick = async () => {
     }
 };
 
-async function isAdmin(email) {
-    const doc = await db.collection('admin').doc('config').get();
-    if (doc.exists && doc.data().adminEmail === email) return true;
-    return email === 'admin@streamhub.com';
-}
-
 document.getElementById('guestBtn').onclick = async () => {
     isGuest = true;
     document.getElementById('loginScreen').classList.add('hidden');
@@ -1002,6 +1038,7 @@ document.getElementById('guestBtn').onclick = async () => {
     await loadUsers();
     await loadMovies();
     await loadSeries();
+    showToast('👋 Modo invitado');
 };
 
 document.getElementById('logoutBtn').onclick = async () => { await auth.signOut(); location.reload(); };
@@ -1013,18 +1050,17 @@ document.getElementById('addMusicBtn').onclick = () => openAddModal('music');
 document.getElementById('addRadioBtn').onclick = () => openAddModal('radios');
 document.getElementById('generateCode').onclick = generateNewCode;
 document.getElementById('saveContentBtn').onclick = saveContent;
-document.getElementById('closeModalBtn').onclick = () => document.getElementById('contentModal').style.display = 'none';
+document.getElementById('closeModalBtn').onclick = closeModal;
 document.getElementById('closeImportModalBtn').onclick = () => document.getElementById('importModal').style.display = 'none';
-document.getElementById('searchSerieBtn').onclick = searchSeriesAndShow;
+document.getElementById('searchSerieBtn').onclick = () => searchSeriesAndShow();
 document.getElementById('searchSerieInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchSeriesAndShow(); });
 
-console.log('✅ Panel con importación automática de series y episodios');
+console.log('✅ Panel con importación automática de series');
 console.log('📌 Características:');
-console.log('   - Busca series en TMDB');
-console.log('   - Importa episodios de Vimeus (si están disponibles)');
-console.log('   - Si no hay, importa de TMDB');
+console.log('   - Busca series en TMDB (funciona siempre)');
+console.log('   - Importa todas las temporadas y episodios');
+console.log('   - Genera URLs de Vimeus automáticamente');
 console.log('   - Permite agregar episodios manualmente');
-console.log('   - Todo se guarda automáticamente en Firebase');
 </script>
 </body>
 </html>
