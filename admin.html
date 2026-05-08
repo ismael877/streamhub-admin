@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Importación Automática de Series</title>
+    <title>StreamHub Admin - Vimeus Integration</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -200,6 +200,17 @@
             margin-bottom: 20px;
         }
         .search-box input { flex: 1; margin-bottom: 0; }
+        .test-video {
+            background: #000;
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .test-video iframe {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -217,7 +228,7 @@
     <!-- Panel Principal -->
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Con Vimeus + TMDB</span></h1>
+            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Vimeus + TMDB</span></h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
 
@@ -272,7 +283,7 @@
 
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos</h2><button id="generateCode" class="success">✨ Generar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody>｜｜DSML｜｜</div>
         </div>
     </div>
 </div>
@@ -282,9 +293,9 @@
     <div class="modal-content">
         <h3>🤖 Importación Automática de Serie</h3>
         <div class="form-group">
-            <label>🔍 Buscar serie en TMDB (funciona siempre)</label>
+            <label>🔍 Buscar serie en TMDB</label>
             <div class="search-box">
-                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Breaking Bad, The Walking Dead..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
+                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Breaking Bad..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
                 <button id="searchSerieBtn" class="info" onclick="searchSeriesAndShow()">Buscar</button>
             </div>
         </div>
@@ -340,6 +351,23 @@ let currentEditId = null;
 const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
 const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+
+// ==================== FUNCIÓN CORRECTA PARA URL DE VIMEUS ====================
+// Según la documentación: https://vimeus.com/e/serie?tmdb=ID&view_key=KEY&se=1&ep=1
+function getVimeusSerieUrl(tmdbId, season = null, episode = null) {
+    let url = `https://vimeus.com/e/serie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+    if (season && episode) {
+        url += `&se=${season}&ep=${episode}`;
+    }
+    console.log('URL generada de Vimeus:', url);
+    return url;
+}
+
+function getVimeusMovieUrl(tmdbId) {
+    const url = `https://vimeus.com/e/movie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+    console.log('URL de película Vimeus:', url);
+    return url;
+}
 
 // ==================== FUNCIONES TMDB ====================
 async function searchTMDB(query, type = 'tv') {
@@ -415,10 +443,13 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         const seasonEpisodes = [];
         
         for (const ep of tmdbEpisodes) {
+            // Usar la función correcta para generar URL de Vimeus
+            const videoUrl = getVimeusSerieUrl(tmdbId, s, ep.episode_number);
+            
             seasonEpisodes.push({
                 number: ep.episode_number,
                 title: ep.name || `Episodio ${ep.episode_number}`,
-                videoUrl: `https://vimeus.com/e/serie?tmdb=${tmdbId}&se=${s}&ep=${ep.episode_number}&view_key=${VIMEUS_VIEW_KEY}`,
+                videoUrl: videoUrl,
                 season: s
             });
         }
@@ -441,8 +472,8 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
     progressBar.value = 85;
     progressStatus.innerText = `Guardando en Firebase...`;
     
-    // Generar URL general de la serie
-    const generalEmbedUrl = `https://vimeus.com/e/serie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+    // Generar URL general de la serie (sin episodio específico)
+    const generalEmbedUrl = getVimeusSerieUrl(tmdbId);
     const year = tmdbDetails.first_air_date?.substring(0,4) || '';
     const genres = tmdbDetails.genres?.map(g => g.name).join(', ') || '';
     
@@ -532,7 +563,8 @@ async function loadUsers() {
                     <td style="padding:12px;"><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
                     <td style="padding:12px;"><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
                     <td style="padding:12px;"><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                    <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td></tr>`;
+                    <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td>
+                </tr>`;
         });
         document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay usuarios</td></tr>';
     } catch (error) { console.error(error); }
@@ -547,7 +579,8 @@ async function loadMovies() {
             html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                     <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-                    <td style="padding:12px;"><button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+                    <td style="padding:12px;"><button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
+                </tr>`;
         });
         document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay películas</td></tr>';
     } catch (error) { console.error(error); }
@@ -577,7 +610,7 @@ async function loadSeries() {
                         <button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver</button>
                         <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button>
                     </td>
-                </tr>`;
+                 </tr>`;
         });
         
         html += '</tbody></table></div>';
@@ -640,6 +673,10 @@ window.viewSeriesDetails = async (docId) => {
                 <p><strong>Total Episodios:</strong> ${data.totalEpisodes || 0}</p>
             </div>
         </div>
+        <div class="test-video">
+            <p><strong>🎬 Vista previa (Episodio 1x1):</strong></p>
+            <iframe src="${getVimeusSerieUrl(data.tmdbId, 1, 1)}" frameborder="0" allowfullscreen referrerpolicy="origin"></iframe>
+        </div>
         <div class="seasons-container">
             <h3>📋 Temporadas y Episodios</h3>
     `;
@@ -663,7 +700,7 @@ window.viewSeriesDetails = async (docId) => {
                             <span class="episode-number">Ep ${ep.number}</span>
                             <span class="episode-title">${escapeHtml(ep.title)}</span>
                         </div>
-                        <button onclick="window.open('${ep.videoUrl}', '_blank')" class="btn-small" style="background:#3b82f6;">▶️ Ver</button>
+                        <button onclick="window.open('${getVimeusSerieUrl(data.tmdbId, season.number, ep.number)}', '_blank')" class="btn-small" style="background:#3b82f6;">▶️ Ver</button>
                     </div>
                 `;
             }
@@ -680,7 +717,7 @@ window.viewSeriesDetails = async (docId) => {
             <input type="text" id="newEpisodeTitle" placeholder="Título del episodio" style="flex:1;margin:0;">
             <button onclick="addEpisodeManually('${docId}')" class="success">➕ Agregar</button>
         </div>
-        <p style="font-size:12px;color:#94a3b8;">La URL de Vimeus se genera automáticamente con el TMDB ID y la temporada/episodio</p>
+        <p style="font-size:12px;color:#94a3b8;">La URL de Vimeus se genera automáticamente: https://vimeus.com/e/serie?tmdb=${data.tmdbId}&se=1&ep=1&view_key=${VIMEUS_VIEW_KEY}</p>
     </div></div>`;
     
     document.getElementById('seriesDetailContent').innerHTML = html;
@@ -721,7 +758,7 @@ window.addEpisodeManually = async (docId) => {
     
     // Agregar episodio con URL de Vimeus generada automáticamente
     const tmdbId = data.tmdbId;
-    const videoUrl = `https://vimeus.com/e/serie?tmdb=${tmdbId}&se=${seasonNum}&ep=${episodeNum}&view_key=${VIMEUS_VIEW_KEY}`;
+    const videoUrl = getVimeusSerieUrl(tmdbId, seasonNum, episodeNum);
     
     season.episodes.push({
         number: episodeNum,
@@ -770,6 +807,9 @@ window.searchSeriesAndShow = async function() {
         const year = (serie.first_air_date || '').substring(0,4);
         const poster = serie.poster_path ? `${TMDB_IMAGE_BASE}${serie.poster_path}` : '';
         
+        // Mostrar URL de prueba para verificar
+        const testUrl = getVimeusSerieUrl(serie.id, 1, 1);
+        
         html += `
             <div class="search-result-item" onclick="importSerieCompleta(${serie.id}, '${escapeHtml(title)}', '${poster}', '', '${escapeHtml(serie.overview || '')}')">
                 ${poster ? `<img src="${poster}" style="width:60px;height:90px;object-fit:cover;border-radius:8px;">` : '<div style="width:60px;height:90px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">📺</div>'}
@@ -777,6 +817,7 @@ window.searchSeriesAndShow = async function() {
                     <strong>${escapeHtml(title)}</strong>
                     <div style="font-size:12px; color:#94a3b8;">${year} • TMDB ID: ${serie.id}</div>
                     <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente todas las temporadas y episodios</div>
+                    <div style="font-size:10px; color:#667eea; word-break:break-all;">🔗 URL de prueba: ${testUrl.substring(0,60)}...</div>
                 </div>
                 <button style="background:#10b981; padding:8px 20px; cursor:pointer;">Importar</button>
             </div>
@@ -873,7 +914,7 @@ window.saveContent = async function() {
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
             
             if (tmdbId) {
-                updateData.videoUrl = `https://vimeus.com/e/serie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+                updateData.videoUrl = getVimeusSerieUrl(tmdbId);
             }
             updateData.seasons = [];
             updateData.totalSeasons = 0;
@@ -889,7 +930,7 @@ window.saveContent = async function() {
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
             
             if (tmdbId) {
-                updateData.videoUrl = `https://vimeus.com/e/movie?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
+                updateData.videoUrl = getVimeusMovieUrl(tmdbId);
             }
             
         } else if (type === 'music') {
@@ -1052,15 +1093,10 @@ document.getElementById('generateCode').onclick = generateNewCode;
 document.getElementById('saveContentBtn').onclick = saveContent;
 document.getElementById('closeModalBtn').onclick = closeModal;
 document.getElementById('closeImportModalBtn').onclick = () => document.getElementById('importModal').style.display = 'none';
-document.getElementById('searchSerieBtn').onclick = () => searchSeriesAndShow();
-document.getElementById('searchSerieInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchSeriesAndShow(); });
 
-console.log('✅ Panel con importación automática de series');
-console.log('📌 Características:');
-console.log('   - Busca series en TMDB (funciona siempre)');
-console.log('   - Importa todas las temporadas y episodios');
-console.log('   - Genera URLs de Vimeus automáticamente');
-console.log('   - Permite agregar episodios manualmente');
+console.log('✅ Panel con URLs correctas de Vimeus');
+console.log('📌 View Key:', VIMEUS_VIEW_KEY);
+console.log('📌 URL base:', 'https://vimeus.com/e/serie?tmdb=ID&view_key=KEY&se=1&ep=1');
 </script>
 </body>
 </html>
