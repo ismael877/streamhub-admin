@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Vimeus Integration</title>
+    <title>StreamHub Admin - Vimeus Integration (Corregido)</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -220,11 +220,14 @@
         }
         .type-anime { background: #f59e0b; }
         .type-serie { background: #3b82f6; }
+        .episode-fixed {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 3px solid #10b981;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- Pantalla de Login -->
     <div id="loginScreen" class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
         <h2 style="margin-bottom: 20px;">🔐 Panel Administrador</h2>
         <input type="email" id="email" placeholder="Correo electrónico">
@@ -234,7 +237,6 @@
         <p id="loginError" style="color: #ef4444; margin-top: 10px; display: none;"></p>
     </div>
 
-    <!-- Panel Principal -->
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
             <h1>🎬 StreamHub Admin <span class="vimeus-badge">Vimeus + TMDB</span></h1>
@@ -261,18 +263,12 @@
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success">🔄 Refrescar</button>
-            <div style="overflow-x: auto;">
-                <table style="width:100%;"><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
-                <tbody id="usersTable"></tbody></table>
-            </div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
         </div>
 
         <div id="moviesSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;">
-                <table style="width:100%;"><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
-                <tbody id="moviesTable"></tbody></table>
-            </div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
         </div>
 
         <div id="seriesSection" class="card hidden">
@@ -288,25 +284,21 @@
 
         <div id="musicSection" class="card hidden">
             <h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
-            <tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
         </div>
 
         <div id="radiosSection" class="card hidden">
             <h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button>
-            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead>
-            <tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos</h2><button id="generateCode" class="success">✨ Generar</button>
-            <div style="overflow-x: auto;"><table style="width:100%;"><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead>
-            <tbody id="codesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
         </div>
     </div>
 </div>
 
-<!-- Modal para agregar contenido manual -->
 <div id="contentModal" class="modal">
     <div class="modal-content">
         <h3 id="modalTitle">Agregar Contenido</h3>
@@ -318,14 +310,13 @@
     </div>
 </div>
 
-<!-- Modal para importar serie automático -->
 <div id="importModal" class="modal">
     <div class="modal-content">
         <h3>🤖 Importación Automática</h3>
         <div class="form-group">
             <label>🔍 Buscar en TMDB</label>
             <div class="search-box">
-                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Attack on Titan, Naruto..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
+                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Attack on Titan..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
                 <button id="searchSerieBtn" class="info">Buscar</button>
             </div>
         </div>
@@ -349,7 +340,6 @@
     </div>
 </div>
 
-<!-- Modal para ver detalles de serie -->
 <div id="seriesDetailModal" class="modal">
     <div class="modal-content" style="max-width: 800px;">
         <div id="seriesDetailContent"></div>
@@ -382,36 +372,20 @@ const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
 const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
-// Lista de palabras clave para detectar animes
+// Palabras clave para detectar animes
 const ANIME_KEYWORDS = ['anime', 'shippuden', 'dragon ball', 'naruto', 'one piece', 'bleach', 'attack on titan', 
                         'jujutsu', 'demon slayer', 'kimetsu', 'my hero academia', 'tokyo ghoul', 'death note',
-                        'fullmetal', 'steins;gate', 'cowboy bebop', 'evangelion', 'sword art online', 'fairy tail',
-                        'black clover', 'mob psycho', 'one punch man', 'hunter x hunter', 'berserk', 'gintama'];
+                        'fullmetal', 'steins;gate', 'cowboy bebop', 'evangelion', 'sword art online'];
 
-// Función para detectar si es anime basado en el título y géneros
 function isAnime(title, genres = []) {
     const titleLower = title.toLowerCase();
-    // Verificar por palabras clave en el título
     for (const keyword of ANIME_KEYWORDS) {
-        if (titleLower.includes(keyword)) {
-            return true;
-        }
-    }
-    // Verificar por géneros de TMDB que indican anime
-    const animeGenres = ['Animation', 'Anime', 'Action', 'Adventure', 'Fantasy'];
-    if (genres && genres.length > 0) {
-        for (const genre of genres) {
-            if (animeGenres.includes(genre.name) && titleLower.includes('anime')) {
-                return true;
-            }
-        }
+        if (titleLower.includes(keyword)) return true;
     }
     return false;
 }
 
-// ==================== FUNCIONES URL VIMEUS (CORREGIDAS) ====================
-// Para series normales: /e/serie
-// Para animes: /e/anime
+// ==================== FUNCIÓN CORREGIDA: URL DE VIMEUS ====================
 function getVimeusUrl(tmdbId, isAnimeContent = false, season = null, episode = null) {
     const endpoint = isAnimeContent ? 'anime' : 'serie';
     let url = `https://vimeus.com/e/${endpoint}?tmdb=${tmdbId}&view_key=${VIMEUS_VIEW_KEY}`;
@@ -433,7 +407,7 @@ async function searchTMDB(query, type = 'tv') {
         const data = await response.json();
         return data.results || [];
     } catch (error) {
-        console.error('Error buscando en TMDB:', error);
+        console.error('Error buscando:', error);
         showToast('Error al buscar en TMDB', true);
         return [];
     }
@@ -462,7 +436,7 @@ async function getTMDBSeasonEpisodes(tmdbId, seasonNumber) {
     }
 }
 
-// ==================== FUNCIÓN PRINCIPAL DE IMPORTACIÓN ====================
+// ==================== IMPORTACIÓN CORREGIDA ====================
 async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, overview) {
     const progressDiv = document.getElementById('importProgressArea');
     const progressBar = document.getElementById('importProgress');
@@ -480,7 +454,6 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         return;
     }
     
-    // Detectar si es anime
     const esAnime = isAnime(titulo, tmdbDetails.genres);
     console.log(`🎬 "${titulo}" - ¿Es anime? ${esAnime}`);
     
@@ -497,17 +470,22 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         const tmdbEpisodes = await getTMDBSeasonEpisodes(tmdbId, s);
         const seasonEpisodes = [];
         
+        // IMPORTANTE: Usamos el número de episodio DENTRO de la temporada
+        // Vimeus espera: se=1&ep=1, se=1&ep=2, se=2&ep=1, se=2&ep=2, etc.
         for (const ep of tmdbEpisodes) {
-            // Usar el endpoint correcto según si es anime o serie
-            const videoUrl = getVimeusUrl(tmdbId, esAnime, s, ep.episode_number);
+            // Usamos ep.episode_number que es el número relativo a la temporada
+            const episodeNumberInSeason = ep.episode_number;
+            const videoUrl = getVimeusUrl(tmdbId, esAnime, s, episodeNumberInSeason);
+            
             seasonEpisodes.push({
-                number: ep.episode_number,
-                title: ep.name || `Episodio ${ep.episode_number}`,
+                number: episodeNumberInSeason,
+                title: ep.name || `Episodio ${episodeNumberInSeason}`,
                 videoUrl: videoUrl,
                 season: s
             });
         }
         
+        // Ordenar por número de episodio dentro de la temporada
         seasonEpisodes.sort((a, b) => a.number - b.number);
         
         seasonsData.push({
@@ -613,15 +591,11 @@ async function loadUsers() {
         let html = '';
         users.forEach(doc => {
             const u = doc.data();
-            html += `<tr>
-                    <td style="padding:12px;">${escapeHtml(u.email)}</td>
+            html += `<tr><td style="padding:12px;">${escapeHtml(u.email)}</td>
                     <td style="padding:12px;"><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
                     <td style="padding:12px;"><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-                    <td style="padding:12px;">
-                        <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                        <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
-                    </td>
-                </tr>`;
+                    <td style="padding:12px;"><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+                    <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td></tr>`;
         });
         document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay usuarios</td></tr>';
     } catch (error) { console.error(error); }
@@ -633,12 +607,10 @@ async function loadMovies() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr>
-                    <td style="padding:12px;">${escapeHtml(data.title)}</td>
+            html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                     <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-                    <td style="padding:12px;"><button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
-                </tr>`;
+                    <td style="padding:12px;"><button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
         document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay películas</td></tr>';
     } catch (error) { console.error(error); }
@@ -661,17 +633,13 @@ async function loadSeries() {
             const contentType = data.isAnime ? '🎌 Anime' : '📺 Serie';
             const typeBadge = data.isAnime ? 'type-anime' : 'type-serie';
             
-            html += `<tr>
-                    <td style="padding:12px;">${escapeHtml(data.title)}</td>
+            html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                     <td style="padding:12px;"><span class="type-badge ${typeBadge}">${contentType}</span></td>
                     <td style="padding:12px;">📺 ${seasonsCount}</td>
                     <td style="padding:12px;">📋 ${episodesCount}</td>
-                    <td style="padding:12px;">
-                        <button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver</button>
-                        <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button>
-                    </td>
-                </tr>`;
+                    <td style="padding:12px;"><button onclick="viewSeriesDetails('${doc.id}')" style="background:#10b981;">👁️ Ver</button>
+                    <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
         
         html += '</tbody></table></div>';
@@ -685,7 +653,10 @@ async function loadMusic() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td>${escapeHtml(data.title)}</td><td>${escapeHtml(data.artist)}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td><td>${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td><td><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+            html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td><td style="padding:12px;">${escapeHtml(data.artist)}</td>
+                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
+                    <td style="padding:12px;">${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
+                    <td style="padding:12px;"><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
         document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5" style="padding:40px;text-align:center;">No hay música</td></tr>';
     } catch (error) { console.error(error); }
@@ -697,9 +668,12 @@ async function loadRadios() {
         let html = '';
         snapshot.forEach(doc => {
             const data = doc.data();
-            html += `<tr><td>${escapeHtml(data.name)}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td><td>${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td><td><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+            html += `<tr><td style="padding:12px;">${escapeHtml(data.name)}</td>
+                    <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;">` : '—'}</td>
+                    <td style="padding:12px;">${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
+                    <td style="padding:12px;"><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
-        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px;text-align:center;">No hay radios</td></tr>';
+        document.getElementById('radiosTable').innerHTML = html || '</table><td colspan="4" style="padding:40px;text-align:center;">No hay radios</td></tr>';
     } catch (error) { console.error(error); }
 }
 
@@ -709,11 +683,9 @@ async function loadCodes() {
         let html = '';
         snapshot.forEach(doc => {
             const c = doc.data();
-            html += `<tr>
-                    <td style="padding:12px;"><code>${doc.id}</code></td>
+            html += `<tr><td style="padding:12px;"><code>${doc.id}</code></td>
                     <td style="padding:12px;"><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-                    <td style="padding:12px;"><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
-                </tr>`;
+                    <td style="padding:12px;"><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td></tr>`;
         });
         document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3" style="padding:40px;text-align:center;">No hay códigos</td></tr>';
     } catch (error) { console.error(error); }
@@ -732,87 +704,44 @@ function openAddModal(type) {
     if (type === 'movies') {
         modalTitle.innerText = '🎬 Nueva Película';
         modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la película"></div>
-            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
-            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>ID TMDB</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Video (se genera automáticamente)</label><input id="edit_videoUrl" placeholder="Automático con TMDB ID"></div>
             <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3"></textarea></div>
         `;
-        
-        const imageInput = document.getElementById('edit_imageUrl');
+        const img = document.getElementById('edit_imageUrl');
         const preview = document.getElementById('imagePreview');
-        if (imageInput && preview) {
-            imageInput.oninput = () => {
-                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-                else preview.style.backgroundImage = '';
-            };
-        }
+        if (img && preview) img.oninput = () => { if(img.value) preview.style.backgroundImage = `url('${img.value}')`; else preview.style.backgroundImage = ''; };
     } else if (type === 'series') {
         modalTitle.innerText = '📺 Nueva Serie/Anime (Manual)';
         modalFields.innerHTML = `
             <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>ID TMDB (para Vimeus)</label><input id="edit_tmdbId" placeholder="Ej: 1399 (serie) o 86031 (anime)"></div>
-            <div class="form-group"><label>Tipo</label>
-                <select id="edit_type">
-                    <option value="serie">📺 Serie</option>
-                    <option value="anime">🎌 Anime</option>
-                </select>
-            </div>
+            <div class="form-group"><label>ID TMDB</label><input id="edit_tmdbId" placeholder="Ej: 1399 (serie) o 86031 (anime)"></div>
+            <div class="form-group"><label>Tipo</label><select id="edit_type"><option value="serie">📺 Serie</option><option value="anime">🎌 Anime</option></select></div>
             <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
             <div id="imagePreview" class="image-preview"></div>
             <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3"></textarea></div>
         `;
-        
-        const imageInput = document.getElementById('edit_imageUrl');
+        const img = document.getElementById('edit_imageUrl');
         const preview = document.getElementById('imagePreview');
-        if (imageInput && preview) {
-            imageInput.oninput = () => {
-                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-                else preview.style.backgroundImage = '';
-            };
-        }
+        if (img && preview) img.oninput = () => { if(img.value) preview.style.backgroundImage = `url('${img.value}')`; else preview.style.backgroundImage = ''; };
     } else if (type === 'music') {
         modalTitle.innerText = '🎵 Nueva Canción';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Audio</label><input id="edit_audioUrl" placeholder="https://..."></div>
-        `;
-        
-        const imageInput = document.getElementById('edit_imageUrl');
+        modalFields.innerHTML = `<div class="form-group"><label>Título</label><input id="edit_title"></div><div class="form-group"><label>Artista</label><input id="edit_artist"></div><div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl"></div><div id="imagePreview" class="image-preview"></div><div class="form-group"><label>URL Audio</label><input id="edit_audioUrl"></div>`;
+        const img = document.getElementById('edit_imageUrl');
         const preview = document.getElementById('imagePreview');
-        if (imageInput && preview) {
-            imageInput.oninput = () => {
-                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-                else preview.style.backgroundImage = '';
-            };
-        }
+        if (img && preview) img.oninput = () => { if(img.value) preview.style.backgroundImage = `url('${img.value}')`; else preview.style.backgroundImage = ''; };
     } else if (type === 'radios') {
         modalTitle.innerText = '📻 Nueva Radio';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Nombre *</label><input id="edit_name" placeholder="Nombre"></div>
-            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Género"></div>
-        `;
-        
-        const imageInput = document.getElementById('edit_imageUrl');
+        modalFields.innerHTML = `<div class="form-group"><label>Nombre</label><input id="edit_name"></div><div class="form-group"><label>URL Stream</label><input id="edit_streamUrl"></div><div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl"></div><div id="imagePreview" class="image-preview"></div><div class="form-group"><label>País</label><input id="edit_country"></div><div class="form-group"><label>Género</label><input id="edit_genre"></div>`;
+        const img = document.getElementById('edit_imageUrl');
         const preview = document.getElementById('imagePreview');
-        if (imageInput && preview) {
-            imageInput.oninput = () => {
-                if (imageInput.value) preview.style.backgroundImage = `url('${imageInput.value}')`;
-                else preview.style.backgroundImage = '';
-            };
-        }
+        if (img && preview) img.oninput = () => { if(img.value) preview.style.backgroundImage = `url('${img.value}')`; else preview.style.backgroundImage = ''; };
     }
     
     modal.style.display = 'flex';
@@ -835,18 +764,11 @@ async function saveContent() {
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            
-            if (tmdbId) {
-                updateData.videoUrl = getVimeusMovieUrl(tmdbId);
-            } else if (document.getElementById('edit_videoUrl')?.value) {
-                updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-            }
-            
+            if (tmdbId) updateData.videoUrl = getVimeusMovieUrl(tmdbId);
         } else if (type === 'series') {
             const tmdbId = document.getElementById('edit_tmdbId')?.value;
             const contentType = document.getElementById('edit_type')?.value || 'serie';
             const isAnimeContent = contentType === 'anime';
-            
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
             if (tmdbId) updateData.tmdbId = tmdbId;
             updateData.contentType = contentType;
@@ -855,14 +777,10 @@ async function saveContent() {
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genres = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-            
-            if (tmdbId) {
-                updateData.videoUrl = getVimeusUrl(tmdbId, isAnimeContent);
-            }
+            if (tmdbId) updateData.videoUrl = getVimeusUrl(tmdbId, isAnimeContent);
             updateData.seasons = [];
             updateData.totalSeasons = 0;
             updateData.totalEpisodes = 0;
-            
         } else if (type === 'music') {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
             if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
@@ -877,7 +795,6 @@ async function saveContent() {
         }
         
         if (!currentEditId) updateData.createdAt = new Date();
-        
         await db.collection(type).doc(id).set(updateData, { merge: true });
         showToast('✅ Guardado correctamente');
         closeModal();
@@ -906,46 +823,26 @@ window.viewSeriesDetails = async (docId) => {
         </div>
         <div style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap;">
             ${data.imageUrl ? `<img src="${data.imageUrl}" style="width:150px;border-radius:12px;">` : ''}
-            <div style="flex:1;">
-                <p><strong>Año:</strong> ${data.year || 'N/A'}</p>
-                <p><strong>Género:</strong> ${data.genres || 'N/A'}</p>
-                <p><strong>TMDB ID:</strong> ${data.tmdbId}</p>
-                <p><strong>Total Episodios:</strong> ${data.totalEpisodes || 0}</p>
-            </div>
+            <div style="flex:1;"><p><strong>Año:</strong> ${data.year || 'N/A'}</p>
+            <p><strong>Género:</strong> ${data.genres || 'N/A'}</p>
+            <p><strong>TMDB ID:</strong> ${data.tmdbId}</p>
+            <p><strong>Total Episodios:</strong> ${data.totalEpisodes || 0}</p></div>
         </div>
-        <div class="test-video">
-            <p><strong>🎬 Vista previa (Episodio 1x1):</strong></p>
-            <iframe src="${getVimeusUrl(data.tmdbId, esAnime, 1, 1)}" frameborder="0" allowfullscreen referrerpolicy="origin"></iframe>
-        </div>
-        <div class="seasons-container">
-            <h3>📋 Temporadas y Episodios</h3>
-    `;
+        <div class="test-video"><p><strong>🎬 Vista previa (Episodio 1x1):</strong></p>
+        <iframe src="${getVimeusUrl(data.tmdbId, esAnime, 1, 1)}" frameborder="0" allowfullscreen referrerpolicy="origin"></iframe></div>
+        <div class="seasons-container"><h3>📋 Temporadas y Episodios</h3>`;
     
     for (const season of (data.seasons || [])) {
-        html += `
-            <div class="season-card">
-                <div class="season-header">
-                    <h4>🎬 Temporada ${season.number}: ${escapeHtml(season.title)}</h4>
-                </div>
-                <div class="episodes-list">
-        `;
-        
+        html += `<div class="season-card"><div class="season-header"><h4>🎬 Temporada ${season.number}: ${escapeHtml(season.title)}</h4></div><div class="episodes-list">`;
         if (!season.episodes || season.episodes.length === 0) {
             html += `<p style="color:#94a3b8;">Sin episodios</p>`;
         } else {
             for (const ep of season.episodes) {
-                html += `
-                    <div class="episode-item">
-                        <div class="episode-info">
-                            <span class="episode-number">Ep ${ep.number}</span>
-                            <span class="episode-title">${escapeHtml(ep.title)}</span>
-                        </div>
-                        <button onclick="window.open('${getVimeusUrl(data.tmdbId, esAnime, season.number, ep.number)}', '_blank')" class="btn-small" style="background:#3b82f6;">▶️ Ver</button>
-                    </div>
-                `;
+                html += `<div class="episode-item"><div class="episode-info"><span class="episode-number">Ep ${ep.number}</span>
+                        <span class="episode-title">${escapeHtml(ep.title)}</span></div>
+                        <button onclick="window.open('${getVimeusUrl(data.tmdbId, esAnime, season.number, ep.number)}', '_blank')" class="btn-small" style="background:#3b82f6;">▶️ Ver</button></div>`;
             }
         }
-        
         html += `</div></div>`;
     }
     
@@ -954,29 +851,23 @@ window.viewSeriesDetails = async (docId) => {
         <div class="episode-input-row" style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
             <input type="number" id="newSeasonNum" placeholder="Temporada" style="width:100px;margin:0;">
             <input type="number" id="newEpisodeNum" placeholder="Episodio" style="width:100px;margin:0;">
-            <input type="text" id="newEpisodeTitle" placeholder="Título del episodio" style="flex:1;margin:0;">
+            <input type="text" id="newEpisodeTitle" placeholder="Título" style="flex:1;margin:0;">
             <button onclick="addEpisodeManually('${docId}')" class="success">➕ Agregar</button>
         </div>
-        <p style="font-size:12px;color:#94a3b8;">La URL de Vimeus se genera automáticamente usando ${esAnime ? 'anime' : 'serie'}</p>
+        <p style="font-size:12px;color:#94a3b8;">La URL se genera como: ...?tmdb=${data.tmdbId}&se={temporada}&ep={episodio}</p>
     </div></div>`;
     
     document.getElementById('seriesDetailContent').innerHTML = html;
     document.getElementById('seriesDetailModal').style.display = 'flex';
 };
 
-window.closeSeriesDetail = () => {
-    document.getElementById('seriesDetailModal').style.display = 'none';
-};
+window.closeSeriesDetail = () => { document.getElementById('seriesDetailModal').style.display = 'none'; };
 
 window.addEpisodeManually = async (docId) => {
     const seasonNum = parseInt(document.getElementById('newSeasonNum')?.value);
     const episodeNum = parseInt(document.getElementById('newEpisodeNum')?.value);
     const episodeTitle = document.getElementById('newEpisodeTitle')?.value;
-    
-    if (!seasonNum || !episodeNum || !episodeTitle) {
-        showToast('Completa todos los campos', true);
-        return;
-    }
+    if (!seasonNum || !episodeNum || !episodeTitle) { showToast('Completa todos los campos', true); return; }
     
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
@@ -989,30 +880,13 @@ window.addEpisodeManually = async (docId) => {
         seasons.push(season);
         seasons.sort((a, b) => a.number - b.number);
     }
+    if (season.episodes.some(e => e.number === episodeNum)) { showToast('Este episodio ya existe', true); return; }
     
-    if (season.episodes.some(e => e.number === episodeNum)) {
-        showToast('Este episodio ya existe', true);
-        return;
-    }
-    
-    const tmdbId = data.tmdbId;
-    const videoUrl = getVimeusUrl(tmdbId, esAnime, seasonNum, episodeNum);
-    
-    season.episodes.push({
-        number: episodeNum,
-        title: episodeTitle,
-        videoUrl: videoUrl
-    });
+    const videoUrl = getVimeusUrl(data.tmdbId, esAnime, seasonNum, episodeNum);
+    season.episodes.push({ number: episodeNum, title: episodeTitle, videoUrl: videoUrl });
     season.episodes.sort((a, b) => a.number - b.number);
-    
     const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-    
-    await db.collection('series').doc(docId).update({
-        seasons: seasons,
-        totalEpisodes: totalEpisodes,
-        updatedAt: new Date()
-    });
-    
+    await db.collection('series').doc(docId).update({ seasons: seasons, totalEpisodes: totalEpisodes, updatedAt: new Date() });
     showToast(`✅ Episodio ${seasonNum}x${episodeNum} agregado`);
     document.getElementById('newSeasonNum').value = '';
     document.getElementById('newEpisodeNum').value = '';
@@ -1023,20 +897,12 @@ window.addEpisodeManually = async (docId) => {
 // ==================== IMPORTACIÓN UI ====================
 window.searchSeriesAndShow = async function() {
     const query = document.getElementById('searchSerieInput').value.trim();
-    if (!query) {
-        showToast('Ingresa un título para buscar', true);
-        return;
-    }
+    if (!query) { showToast('Ingresa un título para buscar', true); return; }
     
     const resultsDiv = document.getElementById('searchResults');
     resultsDiv.innerHTML = '<div class="loading-text">🔍 Buscando en TMDB...</div>';
-    
     const results = await searchTMDB(query, 'tv');
-    
-    if (results.length === 0) {
-        resultsDiv.innerHTML = '<div class="loading-text">❌ No se encontraron resultados. Prueba con otro nombre.</div>';
-        return;
-    }
+    if (results.length === 0) { resultsDiv.innerHTML = '<div class="loading-text">❌ No se encontraron resultados</div>'; return; }
     
     let html = '<div style="display:grid;gap:10px;">';
     for (const serie of results) {
@@ -1046,19 +912,12 @@ window.searchSeriesAndShow = async function() {
         const esAnime = isAnime(title);
         const tipoTexto = esAnime ? '🎌 Anime' : '📺 Serie';
         const tipoColor = esAnime ? '#f59e0b' : '#3b82f6';
-        
-        html += `
-            <div class="search-result-item" onclick="importSerieCompleta(${serie.id}, '${escapeHtml(title)}', '${poster}', '', '${escapeHtml(serie.overview || '')}')">
-                ${poster ? `<img src="${poster}" style="width:60px;height:90px;object-fit:cover;border-radius:8px;">` : '<div style="width:60px;height:90px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">📺</div>'}
-                <div style="flex:1">
-                    <strong>${escapeHtml(title)}</strong>
-                    <div style="font-size:12px; color:#94a3b8;">${year} • TMDB ID: ${serie.id}</div>
-                    <div><span style="background:${tipoColor}; padding:2px 8px; border-radius:12px; font-size:10px;">${tipoTexto}</span></div>
-                    <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente todas las temporadas y episodios</div>
-                </div>
-                <button style="background:#10b981; padding:8px 20px; cursor:pointer;">Importar</button>
-            </div>
-        `;
+        html += `<div class="search-result-item" onclick="importSerieCompleta(${serie.id}, '${escapeHtml(title)}', '${poster}', '', '${escapeHtml(serie.overview || '')}')">
+            ${poster ? `<img src="${poster}" style="width:60px;height:90px;object-fit:cover;border-radius:8px;">` : '<div style="width:60px;height:90px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">📺</div>'}
+            <div style="flex:1"><strong>${escapeHtml(title)}</strong><div style="font-size:12px; color:#94a3b8;">${year} • TMDB ID: ${serie.id}</div>
+            <div><span style="background:${tipoColor}; padding:2px 8px; border-radius:12px; font-size:10px;">${tipoTexto}</span></div>
+            <div style="font-size:11px; color:#10b981;">✨ Importará automáticamente (T1Ep1, T2Ep1, etc.)</div></div>
+            <button style="background:#10b981; padding:8px 20px;">Importar</button></div>`;
     }
     html += '</div>';
     resultsDiv.innerHTML = html;
@@ -1075,44 +934,25 @@ window.openAutoImportModal = function() {
 // ==================== ACCIONES GENERALES ====================
 window.toggleUserStatus = async (uid, isActive) => {
     if (isGuest) { showToast('Modo invitado', true); return; }
-    try {
-        await db.collection('users').doc(uid).update({ active: !isActive });
-        await loadUsers();
-        await loadStats();
-        showToast(`Usuario ${!isActive ? 'activado' : 'suspendido'}`);
-    } catch (error) { showToast('Error', true); }
+    try { await db.collection('users').doc(uid).update({ active: !isActive }); await loadUsers(); await loadStats(); showToast(`Usuario ${!isActive ? 'activado' : 'suspendido'}`); } catch(error) { showToast('Error', true); }
 };
 
 window.toggleUserHost = async (uid, isHost) => {
     if (isGuest) { showToast('Modo invitado', true); return; }
-    try {
-        await db.collection('users').doc(uid).update({ isHost: !isHost });
-        await loadUsers();
-        await loadStats();
-        showToast(`Usuario ahora es ${!isHost ? 'anfitrión' : 'cliente'}`);
-    } catch (error) { showToast('Error', true); }
+    try { await db.collection('users').doc(uid).update({ isHost: !isHost }); await loadUsers(); await loadStats(); showToast(`Usuario ahora es ${!isHost ? 'anfitrión' : 'cliente'}`); } catch(error) { showToast('Error', true); }
 };
 
 window.deleteItem = async (type, id) => {
     if (isGuest) { showToast('Modo invitado', true); return; }
     if (confirm('¿Eliminar permanentemente este contenido?')) {
-        try {
-            await db.collection(type).doc(id).delete();
-            await refreshCurrentSection();
-            showToast('✅ Eliminado');
-        } catch (error) { showToast('Error al eliminar', true); }
+        try { await db.collection(type).doc(id).delete(); await refreshCurrentSection(); showToast('✅ Eliminado'); } catch(error) { showToast('Error al eliminar', true); }
     }
 };
 
 window.deleteCode = async (codeId) => {
     if (isGuest) { showToast('Modo invitado', true); return; }
     if (confirm('¿Eliminar este código?')) {
-        try {
-            await db.collection('codes').doc(codeId).delete();
-            await loadCodes();
-            await loadStats();
-            showToast('✅ Código eliminado');
-        } catch (error) { showToast('Error', true); }
+        try { await db.collection('codes').doc(codeId).delete(); await loadCodes(); await loadStats(); showToast('✅ Código eliminado'); } catch(error) { showToast('Error', true); }
     }
 };
 
@@ -1129,10 +969,7 @@ async function refreshCurrentSection() {
 window.showSection = async (section) => {
     currentSection = section;
     const sections = ['dashboardSection', 'usersSection', 'moviesSection', 'seriesSection', 'musicSection', 'radiosSection', 'codesSection'];
-    sections.forEach(s => {
-        const el = document.getElementById(s);
-        if (el) el.classList.add('hidden');
-    });
+    sections.forEach(s => { const el = document.getElementById(s); if (el) el.classList.add('hidden'); });
     document.getElementById(section + 'Section').classList.remove('hidden');
     await refreshCurrentSection();
 };
@@ -1142,10 +979,8 @@ async function generateNewCode() {
     try {
         const codeId = 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase();
         await db.collection('codes').doc(codeId).set({ ownerId: 'admin', used: false, createdAt: new Date() });
-        showToast(`✅ ${codeId}`);
-        await loadCodes();
-        await loadStats();
-    } catch (error) { showToast('Error', true); }
+        showToast(`✅ ${codeId}`); await loadCodes(); await loadStats();
+    } catch(error) { showToast('Error', true); }
 }
 
 // ==================== EVENT LISTENERS ====================
@@ -1156,27 +991,15 @@ document.getElementById('loginBtn').onclick = async () => {
         const cred = await auth.signInWithEmailAndPassword(email, password);
         const adminDoc = await db.collection('admin').doc('config').get();
         const isAdminUser = (adminDoc.exists && adminDoc.data().adminEmail === email) || email === 'admin@streamhub.com';
-        
         if (isAdminUser) {
-            currentUser = cred.user;
-            isGuest = false;
+            currentUser = cred.user; isGuest = false;
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
             document.getElementById('userEmail').innerText = email;
-            await loadStats();
-            await loadUsers();
-            await loadMovies();
-            await loadSeries();
+            await loadStats(); await loadUsers(); await loadMovies(); await loadSeries();
             showToast('✅ Bienvenido ' + email);
-        } else {
-            document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').innerText = 'No eres administrador';
-            await auth.signOut();
-        }
-    } catch(e) {
-        document.getElementById('loginError').style.display = 'block';
-        document.getElementById('loginError').innerText = e.message;
-    }
+        } else { document.getElementById('loginError').style.display = 'block'; document.getElementById('loginError').innerText = 'No eres administrador'; await auth.signOut(); }
+    } catch(e) { document.getElementById('loginError').style.display = 'block'; document.getElementById('loginError').innerText = e.message; }
 };
 
 document.getElementById('guestBtn').onclick = async () => {
@@ -1184,10 +1007,7 @@ document.getElementById('guestBtn').onclick = async () => {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
     document.getElementById('userEmail').innerText = 'Invitado (solo lectura)';
-    await loadStats();
-    await loadUsers();
-    await loadMovies();
-    await loadSeries();
+    await loadStats(); await loadUsers(); await loadMovies(); await loadSeries();
     showToast('👋 Modo invitado');
 };
 
@@ -1210,11 +1030,11 @@ async function isAdmin(email) {
     return email === 'admin@streamhub.com';
 }
 
-console.log('✅ Panel completamente funcional');
-console.log('📌 View Key:', VIMEUS_VIEW_KEY);
-console.log('📌 Diferencia:');
-console.log('   - Series normales: /e/serie?tmdb=ID&se=1&ep=1');
-console.log('   - Animes: /e/anime?tmdb=ID&se=1&ep=1');
+console.log('✅ Panel CORREGIDO');
+console.log('📌 Cambio importante: Ahora cada temporada tiene sus propios números de episodio');
+console.log('   - Temporada 1: ep=1,2,3...');
+console.log('   - Temporada 2: ep=1,2,3...');
+console.log('   - URL: ...?tmdb=ID&se=1&ep=1 (correcto para Vimeus)');
 </script>
 </body>
 </html>
