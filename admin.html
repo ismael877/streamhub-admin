@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Con TMDB</title>
+    <title>StreamHub Admin</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -61,7 +61,6 @@
         .stat-card { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; text-align: center; }
         .stat-card h2 { font-size: 2rem; color: #c084fc; }
         
-        /* Modal estilos */
         .modal {
             position: fixed;
             top: 0;
@@ -78,18 +77,15 @@
             background: #1e293b;
             border-radius: 24px;
             padding: 30px;
-            max-width: 600px;
+            max-width: 700px;
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
         }
-        .modal-content h3 { margin-bottom: 20px; color: #c084fc; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-size: 0.8rem; color: #94a3b8; }
         .form-row { display: flex; gap: 15px; }
         .form-row .form-group { flex: 1; }
-        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-buttons button { flex: 1; }
         .image-preview {
             width: 100%;
             height: 150px;
@@ -99,29 +95,20 @@
             margin-bottom: 10px;
             background-color: #0f172a;
         }
-        .search-results {
-            background: #0f172a;
+        .episode-item {
+            background: rgba(0,0,0,0.3);
             border-radius: 16px;
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
+            padding: 15px;
+            margin-bottom: 15px;
         }
-        .search-result-item {
-            padding: 12px 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            transition: 0.2s;
+        .episode-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
-        .search-result-item:hover {
-            background: #334155;
-        }
-        .tmdb-badge {
-            background: #01b4e4;
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            margin-left: 8px;
+        .episode-title {
+            font-weight: bold;
         }
     </style>
 </head>
@@ -173,13 +160,13 @@
         <!-- Películas -->
         <div id="moviesSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="moviesTable"></tbody></table></div>
         </div>
 
         <!-- Series -->
         <div id="seriesSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📺 Series</h2><button id="addSerieBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><td><thead><tr><th>Título</th><th>Temporadas</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
         </div>
 
         <!-- Música -->
@@ -191,20 +178,20 @@
         <!-- Radios -->
         <div id="radiosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <!-- Videos Musicales -->
         <div id="musicVideosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
         </div>
 
         <!-- Códigos -->
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos de invitación</h2>
             <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"></table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
         </div>
     </div>
 </div>
@@ -214,7 +201,7 @@
     <div class="modal-content">
         <h3 id="modalTitle">Agregar Contenido</h3>
         <div id="modalFields"></div>
-        <div class="modal-buttons">
+        <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
             <button id="saveContentBtn" class="success">💾 Guardar</button>
             <button id="closeModalBtn">Cancelar</button>
         </div>
@@ -222,7 +209,7 @@
 </div>
 
 <script>
-// ==================== CONFIGURACIÓN ====================
+// Configuración de Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDvfEZydbSdzZlN93WVnUnGXWdhk11xngQ",
     authDomain: "streamhub-app-5aa0e.firebaseapp.com",
@@ -231,11 +218,6 @@ const firebaseConfig = {
     messagingSenderId: "728979558000",
     appId: "1:728979558000:web:293b0114fe0d2201e1aeb5"
 };
-
-// Configuración de TMDB
-const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
-const TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MmExMzlmZTIxYjZkMjk2YWIxMjY2MTQ4OWE2OTM0ZCIsIm5iZiI6MTQ3MzU2NjI0NS42MDYwMDAyLCJzdWIiOiI1N2Q0ZDYyNTkyNTE0MTM2NjcwMDMxMGIiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.1NSgal1i2sUbcYJ4jX3Yr1RChZsTZexofto5oCklIGI";
-const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -247,11 +229,14 @@ let isGuest = false;
 let currentEditType = null;
 let currentEditId = null;
 
+// Configuración TMDB
+const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
+const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+
 // ==================== FUNCIONES TMDB ====================
 async function searchTMDB(query, type) {
     const searchType = type === 'movies' ? 'movie' : 'tv';
     const url = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
-    
     try {
         const response = await fetch(url);
         const data = await response.json();
@@ -265,7 +250,6 @@ async function searchTMDB(query, type) {
 async function getTMDBDetails(type, id) {
     const searchType = type === 'movies' ? 'movie' : 'tv';
     const url = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=es`;
-    
     try {
         const response = await fetch(url);
         return await response.json();
@@ -275,17 +259,16 @@ async function getTMDBDetails(type, id) {
     }
 }
 
-// ==================== FUNCIONES DE UI ====================
 function createSearchUI(type, onSelect) {
     const container = document.createElement('div');
     container.className = 'form-group';
     container.innerHTML = `
-        <label>🔍 Buscar en TMDB <span class="tmdb-badge">The Movie Database</span></label>
+        <label>🔍 Buscar en TMDB <span style="background:#01b4e4; padding:2px 8px; border-radius:20px; font-size:10px; margin-left:8px;">The Movie Database</span></label>
         <div style="display: flex; gap: 10px;">
             <input type="text" id="tmdbSearchInput" placeholder="Ej: Inception, The Last of Us..." style="flex: 1;">
             <button id="tmdbSearchBtn" class="info" style="width: auto; padding: 12px 20px;">Buscar</button>
         </div>
-        <div id="tmdbResults" class="search-results hidden"></div>
+        <div id="tmdbResults" class="search-results" style="display:none; background:#0f172a; border-radius:16px; margin-top:10px; max-height:300px; overflow-y:auto;"></div>
     `;
     
     const searchInput = container.querySelector('#tmdbSearchInput');
@@ -296,13 +279,13 @@ function createSearchUI(type, onSelect) {
         const query = searchInput.value.trim();
         if (!query) return;
         
-        resultsDiv.innerHTML = '<div class="search-result-item">Buscando...</div>';
-        resultsDiv.classList.remove('hidden');
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Buscando...</div>';
         
         const results = await searchTMDB(query, type);
         
         if (results.length === 0) {
-            resultsDiv.innerHTML = '<div class="search-result-item">❌ No se encontraron resultados</div>';
+            resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ No se encontraron resultados</div>';
             return;
         }
         
@@ -313,31 +296,27 @@ function createSearchUI(type, onSelect) {
             const poster = result.poster_path ? `${TMDB_IMAGE_BASE}${result.poster_path}` : '';
             
             const item = document.createElement('div');
-            item.className = 'search-result-item';
-            item.innerHTML = `
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    ${poster ? `<img src="${poster}" style="width: 40px; height: 60px; object-fit: cover; border-radius: 8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
-                    <div style="flex:1">
-                        <strong>${title}</strong>
-                        <div style="font-size:12px; color:#94a3b8;">${year} • ID: ${result.id}</div>
-                    </div>
-                    <button class="select-result" data-id="${result.id}" style="background:#10b981; padding:5px 15px;">Seleccionar</button>
-                </div>
-            `;
-            
-            item.querySelector('.select-result').onclick = async (e) => {
-                e.stopPropagation();
-                resultsDiv.innerHTML = '<div class="search-result-item">Cargando detalles...</div>';
+            item.style.cssText = 'padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer; display:flex; gap:15px; align-items:center;';
+            item.onclick = async () => {
+                resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Cargando detalles...</div>';
                 const details = await getTMDBDetails(type, result.id);
                 if (details) {
                     onSelect(details);
-                    resultsDiv.classList.add('hidden');
+                    resultsDiv.style.display = 'none';
                     searchInput.value = '';
                 } else {
-                    resultsDiv.innerHTML = '<div class="search-result-item">❌ Error al cargar detalles</div>';
+                    resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ Error al cargar detalles</div>';
                 }
             };
             
+            item.innerHTML = `
+                ${poster ? `<img src="${poster}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
+                <div style="flex:1">
+                    <strong>${escapeHtml(title)}</strong>
+                    <div style="font-size:12px; color:#94a3b8;">${year} • ID: ${result.id}</div>
+                </div>
+                <button style="background:#10b981; border:none; padding:5px 15px; border-radius:40px; color:white; cursor:pointer;">Seleccionar</button>
+            `;
             resultsDiv.appendChild(item);
         });
     };
@@ -345,7 +324,7 @@ function createSearchUI(type, onSelect) {
     return container;
 }
 
-// ==================== FUNCIONES DE ADMIN (CRUD) ====================
+// ==================== FUNCIONES DE ADMIN ====================
 async function isAdmin(email) {
     const doc = await db.collection('admin').doc('config').get();
     if (doc.exists && doc.data().adminEmail === email) return true;
@@ -380,9 +359,13 @@ async function loadUsers() {
     let html = '';
     users.forEach(doc => {
         const u = doc.data();
-        html += `<tr><td>${u.email}</td><td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td><td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-        <td><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-        <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td></tr>`;
+        html += `<tr>
+            <td>${u.email}</td>
+            <td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
+            <td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
+            <td><button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+            <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button></td>
+        </tr>`;
     });
     document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
 }
@@ -392,10 +375,13 @@ async function loadMovies() {
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr><td>${data.title || '—'}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-        <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-        <td><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-        <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+        html += `<tr>
+            <td>${data.title || '—'}</td>
+            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
+            <td><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+            <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
+        </tr>`;
     });
     document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4">No hay películas</td></tr>';
 }
@@ -405,12 +391,14 @@ async function loadSeries() {
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr><td>${data.title || '—'}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-        <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-        <td><button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-        <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+        html += `<tr>
+            <td>${data.title || '—'}</td>
+            <td>${data.seasons || data.episodes?.length || 0} ${data.seasons === 1 ? 'temporada' : 'temporadas'}</td>
+            <td><button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+            <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button></td>
+        </tr>`;
     });
-    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="4">No hay series</td></tr>';
+    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="3">No hay series</td></tr>';
 }
 
 async function loadMusic() {
@@ -418,11 +406,14 @@ async function loadMusic() {
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr><td>${data.title || '—'}</td><td>${data.artist || '—'}</td>
-        <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-        <td>${data.audioUrl ? data.audioUrl.substring(0,40)+'...' : '—'}</td>
-        <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-        <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+        html += `<tr>
+            <td>${data.title || '—'}</td>
+            <td>${data.artist || '—'}</td>
+            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td>${data.audioUrl ? data.audioUrl.substring(0,40)+'...' : '—'}</td>
+            <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+            <button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
+        </tr>`;
     });
     document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
 }
@@ -432,10 +423,13 @@ async function loadRadios() {
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr><td>${data.name || '—'}</td><td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-        <td>${data.streamUrl ? data.streamUrl.substring(0,40)+'...' : '—'}</td>
-        <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-        <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+        html += `<tr>
+            <td>${data.name || '—'}</td>
+            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td>${data.streamUrl ? data.streamUrl.substring(0,40)+'...' : '—'}</td>
+            <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+            <button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
+        </tr>`;
     });
     document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
 }
@@ -445,13 +439,16 @@ async function loadMusicVideos() {
     let html = '';
     snapshot.forEach(doc => {
         const data = doc.data();
-        html += `<tr><td>${data.title || '—'}</td><td>${data.artist || '—'}</td>
-        <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-        <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
-        <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-        <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td></tr>`;
+        html += `<tr>
+            <td>${data.title || '—'}</td>
+            <td>${data.artist || '—'}</td>
+            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+            <td>${data.videoUrl ? data.videoUrl.substring(0,40)+'...' : '—'}</td>
+            <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+            <button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
+        </tr>`;
     });
-    document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
+    document.getElementById('musicVideosTable').innerHTML = html || '</table><td colspan="5">No hay videos musicales</td></tr>';
 }
 
 async function loadCodes() {
@@ -459,13 +456,16 @@ async function loadCodes() {
     let html = '';
     snapshot.forEach(doc => {
         const c = doc.data();
-        html += `<tr><td><code>${doc.id}</code></td><td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-        <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td></tr>`;
+        html += `<tr>
+            <td><code>${doc.id}</code></td>
+            <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
+            <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
+        </tr>`;
     });
     document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
 }
 
-// Abrir modal para EDITAR
+// ==================== MODAL DE EDICIÓN ====================
 window.openEditModal = async (type, id) => {
     if (isGuest) { alert('Modo invitado'); return; }
     const doc = await db.collection(type).doc(id).get();
@@ -476,7 +476,6 @@ window.openEditModal = async (type, id) => {
     }
 };
 
-// Abrir modal para AGREGAR NUEVO
 function openAddModal(type) {
     if (isGuest) { alert('Modo invitado'); return; }
     currentEditType = type;
@@ -491,19 +490,12 @@ function fillFormWithTMDBData(type, data) {
     const overview = data.overview || '';
     const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
     
-    const titleInput = document.getElementById('edit_title');
-    const imageUrlInput = document.getElementById('edit_imageUrl');
-    const yearInput = document.getElementById('edit_year');
-    const genreInput = document.getElementById('edit_genre');
-    const overviewInput = document.getElementById('edit_overview');
+    if (document.getElementById('edit_title')) document.getElementById('edit_title').value = title;
+    if (document.getElementById('edit_imageUrl')) document.getElementById('edit_imageUrl').value = posterPath;
+    if (document.getElementById('edit_year')) document.getElementById('edit_year').value = year;
+    if (document.getElementById('edit_genre')) document.getElementById('edit_genre').value = genres;
+    if (document.getElementById('edit_overview')) document.getElementById('edit_overview').value = overview;
     
-    if (titleInput) titleInput.value = title;
-    if (imageUrlInput) imageUrlInput.value = posterPath;
-    if (yearInput) yearInput.value = year;
-    if (genreInput) genreInput.value = genres;
-    if (overviewInput) overviewInput.value = overview;
-    
-    // Actualizar previsualización de imagen
     const preview = document.getElementById('imagePreview');
     if (preview && posterPath) {
         preview.style.backgroundImage = `url('${posterPath}')`;
@@ -511,7 +503,62 @@ function fillFormWithTMDBData(type, data) {
     }
 }
 
-// Mostrar formulario modal
+function renderEpisodesSection(episodes = []) {
+    const container = document.getElementById('episodesContainer');
+    if (!container) return;
+    
+    let html = '<h4 style="margin:20px 0 10px 0; color:#c084fc;">📺 Episodios</h4>';
+    episodes.forEach((ep, index) => {
+        html += `
+            <div class="episode-item" data-index="${index}">
+                <div class="episode-header">
+                    <span class="episode-title">Episodio ${ep.number}: ${escapeHtml(ep.title)}</span>
+                    <button type="button" class="remove-episode" data-index="${index}" style="background:#ef4444; padding:4px 12px;">✕</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
+                    <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
+                </div>
+                <div class="form-group"><label>URL del Video (YouTube embed)</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl)}" placeholder="https://www.youtube.com/embed/..."></div>
+            </div>
+        `;
+    });
+    html += `<button type="button" id="addEpisodeBtn" class="info" style="margin-top:10px; width:100%;">+ Agregar Episodio</button>`;
+    container.innerHTML = html;
+    
+    // Evento para agregar episodio
+    document.getElementById('addEpisodeBtn')?.addEventListener('click', () => {
+        const episodes = collectEpisodesFromForm();
+        episodes.push({ number: episodes.length + 1, title: 'Nuevo Episodio', videoUrl: '' });
+        renderEpisodesSection(episodes);
+    });
+    
+    // Eventos para eliminar episodios
+    document.querySelectorAll('.remove-episode').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(btn.dataset.index);
+            const episodes = collectEpisodesFromForm();
+            episodes.splice(index, 1);
+            episodes.forEach((ep, i) => ep.number = i + 1);
+            renderEpisodesSection(episodes);
+        });
+    });
+}
+
+function collectEpisodesFromForm() {
+    const episodes = [];
+    const items = document.querySelectorAll('.episode-item');
+    items.forEach(item => {
+        const number = parseInt(item.querySelector('.episode-number')?.value || 0);
+        const title = item.querySelector('.episode-title-input')?.value || '';
+        const videoUrl = item.querySelector('.episode-url')?.value || '';
+        if (number > 0 && title) {
+            episodes.push({ number, title, videoUrl });
+        }
+    });
+    return episodes;
+}
+
 function showFormModal(type, data) {
     const modal = document.getElementById('contentModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -523,71 +570,72 @@ function showFormModal(type, data) {
         modalTitle.innerText = '🎬 ' + (currentEditId ? 'Editar Película' : 'Nueva Película');
         fieldsHtml = `
             <div id="tmdbSearchContainer"></div>
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: Duna 2"></div>
-            <div class="form-group"><label>URL de la Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL del Video / Enlace</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
             <div class="form-row">
-                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}" placeholder="2024"></div>
-                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Acción, Drama..."></div>
+                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
             </div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la película...">${escapeHtml(data.overview || '')}</textarea></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
         `;
     } else if (type === 'series') {
         modalTitle.innerText = '📺 ' + (currentEditId ? 'Editar Serie' : 'Nueva Serie');
         fieldsHtml = `
             <div id="tmdbSearchContainer"></div>
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: The Last of Us"></div>
-            <div class="form-group"><label>URL de la Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL del Video / Enlace</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
             <div class="form-row">
-                <div class="form-group"><label>Temporadas</label><input id="edit_seasons" value="${escapeHtml(data.seasons || '')}" placeholder="1"></div>
-                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Drama, Ciencia Ficción..."></div>
+                <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
             </div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la serie...">${escapeHtml(data.overview || '')}</textarea></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
+            <div id="episodesContainer"></div>
         `;
     } else if (type === 'music') {
         modalTitle.innerText = '🎵 ' + (currentEditId ? 'Editar Canción' : 'Nueva Canción');
         fieldsHtml = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: TQG"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}" placeholder="Ej: Karol G, Shakira"></div>
-            <div class="form-group"><label>URL de la Imagen (Álbum)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://i.scdn.co/image/..."></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL del Audio/Video</label><input id="edit_audioUrl" value="${escapeHtml(data.audioUrl || data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+            <div class="form-group"><label>URL Audio/Video</label><input id="edit_audioUrl" value="${escapeHtml(data.audioUrl || data.videoUrl || '')}"></div>
         `;
     } else if (type === 'radios') {
         modalTitle.innerText = '📻 ' + (currentEditId ? 'Editar Radio' : 'Nueva Radio');
         fieldsHtml = `
-            <div class="form-group"><label>Nombre *</label><input id="edit_name" value="${escapeHtml(data.name || '')}" placeholder="Ej: LOS40"></div>
-            <div class="form-group"><label>URL del Stream</label><input id="edit_streamUrl" value="${escapeHtml(data.streamUrl || '')}" placeholder="https://playerservices.streamtheworld.com/..."></div>
-            <div class="form-group"><label>URL del Logo/Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://ejemplo.com/logo.png"></div>
+            <div class="form-group"><label>Nombre *</label><input id="edit_name" value="${escapeHtml(data.name || '')}"></div>
+            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" value="${escapeHtml(data.streamUrl || '')}"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-row">
-                <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}" placeholder="España, México..."></div>
-                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}" placeholder="Música, Noticias..."></div>
-            </div>
+            <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
         `;
     } else if (type === 'musicVideos') {
         modalTitle.innerText = '🎤 ' + (currentEditId ? 'Editar Video Musical' : 'Nuevo Video Musical');
         fieldsHtml = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}" placeholder="Ej: Shakira - BZRP"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}" placeholder="Ej: Shakira, Bizarrap"></div>
-            <div class="form-group"><label>URL de la Imagen (Miniatura)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}" placeholder="https://i.ytimg.com/vi/.../hqdefault.jpg"></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" value="${escapeHtml(data.artist || '')}"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL del Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
         `;
     }
     
     modalFields.innerHTML = fieldsHtml;
     
-    // Agregar buscador de TMDB solo para películas y series
+    // Agregar buscador TMDB solo para películas y series
     if (type === 'movies' || type === 'series') {
         const searchContainer = document.getElementById('tmdbSearchContainer');
-        const searchUI = createSearchUI(type, (tmdbData) => {
-            fillFormWithTMDBData(type, tmdbData);
-        });
+        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
         searchContainer.appendChild(searchUI);
+    }
+    
+    // Para series, agregar sección de episodios
+    if (type === 'series') {
+        renderEpisodesSection(data.episodes || []);
     }
     
     // Previsualización de imagen
@@ -609,7 +657,6 @@ function showFormModal(type, data) {
     modal.style.display = 'flex';
 }
 
-// Guardar contenido
 async function saveContent() {
     if (!currentEditType) return;
     if (isGuest) { alert('Modo invitado'); closeModal(); return; }
@@ -628,10 +675,11 @@ async function saveContent() {
     } else if (type === 'series') {
         updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
         if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        if (document.getElementById('edit_seasons')?.value) updateData.seasons = document.getElementById('edit_seasons').value;
+        if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
         if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
         if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+        updateData.episodes = collectEpisodesFromForm();
+        updateData.seasons = 1;
     } else if (type === 'music') {
         updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
         if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
@@ -652,7 +700,6 @@ async function saveContent() {
     
     if (!currentEditId) updateData.createdAt = new Date();
     await db.collection(type).doc(id).set(updateData, { merge: true });
-    
     alert('✅ Guardado correctamente');
     closeModal();
     refreshCurrentSection();
@@ -666,14 +713,10 @@ function closeModal() {
 
 function escapeHtml(text) {
     if (!text) return '';
-    return text.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+    return text.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
+// Acciones
 window.toggleUserStatus = async (uid, isActive) => {
     if (isGuest) { alert('Modo invitado'); return; }
     await db.collection('users').doc(uid).update({ active: !isActive });
