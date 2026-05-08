@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Con TMDB</title>
+    <title>StreamHub Admin - Con Vimeus</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -169,6 +169,14 @@
         }
         .add-episode-btn { margin-top: 10px; width: 100%; }
         .add-season-btn { margin-top: 15px; width: 100%; background: linear-gradient(90deg, #10b981, #059669); }
+        .vimeus-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -186,7 +194,7 @@
     <!-- Panel Principal -->
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1>🎬 StreamHub Admin</h1>
+            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Powered by Vimeus</span></h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
 
@@ -223,10 +231,10 @@
 
         <!-- Películas -->
         <div id="moviesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar desde Vimeus</button></div>
             <div style="overflow-x: auto;">
                 <table style="width:100%; border-collapse: collapse;">
-                    <thead><tr><th style="padding:12px;">Título</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr></thead>
+                    <thead><tr><th style="padding:12px;">Título</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">ID TMDB/IMDb</th><th style="padding:12px;">Acciones</th></tr></thead>
                     <tbody id="moviesTable"></tbody>
                 </table>
             </div>
@@ -234,11 +242,11 @@
 
         <!-- Series -->
         <div id="seriesSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📺 Series</h2><button id="addSerieBtn" class="success">➕ Agregar</button></div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📺 Series</h2><button id="addSerieBtn" class="success">➕ Agregar desde Vimeus</button></div>
             <div id="seriesList" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- Música -->
+        <!-- Música (sin cambios) -->
         <div id="musicSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
             <div style="overflow-x: auto;">
@@ -249,7 +257,7 @@
             </div>
         </div>
 
-        <!-- Radios -->
+        <!-- Radios (sin cambios) -->
         <div id="radiosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
             <div style="overflow-x: auto;">
@@ -260,7 +268,7 @@
             </div>
         </div>
 
-        <!-- Videos Musicales -->
+        <!-- Videos Musicales (sin cambios) -->
         <div id="musicVideosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
             <div style="overflow-x: auto;">
@@ -318,57 +326,102 @@ let isGuest = false;
 let currentEditType = null;
 let currentEditId = null;
 
-// Configuración TMDB
-const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
+// ==================== CONFIGURACIÓN DE VIMEUS ====================
+const VIMEUS_API_KEY = "ak_aqxyOEsSQGl2kadq0QYzO2jTVCUaVV8J";
+const VIMEUS_VIEW_KEY = "DS5uhD56-BZDJZpZ02is-fAGFj_aQGHquhQnWOqjy24";
+const VIMEUS_API_BASE = "https://vimeus.com/api";
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
 
-// ==================== FUNCIONES TMDB ====================
-async function searchTMDB(query, type) {
-    const searchType = type === 'movies' ? 'movie' : 'tv';
-    const url = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        return data.results || [];
-    } catch (error) {
-        console.error('Error buscando en TMDB:', error);
-        return [];
+// ==================== FUNCIONES DE VIMEUS API ====================
+async function searchVimeusContent(query, type) {
+    // Vimeus no tiene búsqueda directa, usamos el listado con filtro manual
+    let allResults = [];
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore && allResults.length < 50) {
+        const endpoint = type === 'movies' ? '/listing/movies' : '/listing/series';
+        const url = `${VIMEUS_API_BASE}${endpoint}?page=${page}`;
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'X-API-Key': VIMEUS_API_KEY
+                }
+            });
+            const data = await response.json();
+            
+            if (data.error === false && data.data) {
+                const items = type === 'movies' ? data.data.movies : data.data.series;
+                const filtered = items.filter(item => 
+                    item.title.toLowerCase().includes(query.toLowerCase())
+                );
+                allResults.push(...filtered);
+                
+                hasMore = data.data.pagination.has_next;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        } catch (error) {
+            console.error('Error buscando en Vimeus:', error);
+            hasMore = false;
+        }
     }
+    
+    return allResults;
 }
 
-async function getTMDBDetails(type, id) {
-    const searchType = type === 'movies' ? 'movie' : 'tv';
-    const url = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=es`;
-    try {
-        const response = await fetch(url);
-        return await response.json();
-    } catch (error) {
-        console.error('Error obteniendo detalles de TMDB:', error);
-        return null;
-    }
+async function getVimeusMovieDetails(tmdbId, imdbId) {
+    const identifier = tmdbId ? `tmdb=${tmdbId}` : `imdb=${imdbId}`;
+    const embedUrl = `https://vimeus.com/e/movie?${identifier}&view_key=${VIMEUS_VIEW_KEY}`;
+    return { embedUrl };
 }
 
-function fillFormWithTMDBData(type, data) {
-    const title = data.title || data.name;
-    const year = (data.release_date || data.first_air_date || '').substring(0,4);
-    const posterPath = data.poster_path ? `${TMDB_IMAGE_BASE}${data.poster_path}` : '';
-    const backdropPath = data.backdrop_path ? `${TMDB_BACKDROP_BASE}${data.backdrop_path}` : '';
-    const overview = data.overview || '';
-    const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
-    
-    if (document.getElementById('edit_title')) document.getElementById('edit_title').value = title;
-    if (document.getElementById('edit_imageUrl')) document.getElementById('edit_imageUrl').value = posterPath;
-    if (document.getElementById('edit_backdropUrl')) document.getElementById('edit_backdropUrl').value = backdropPath;
-    if (document.getElementById('edit_year')) document.getElementById('edit_year').value = year;
-    if (document.getElementById('edit_genre')) document.getElementById('edit_genre').value = genres;
-    if (document.getElementById('edit_overview')) document.getElementById('edit_overview').value = overview;
-    
-    const preview = document.getElementById('imagePreview');
-    if (preview && posterPath) {
-        preview.style.backgroundImage = `url('${posterPath}')`;
-        preview.style.backgroundSize = 'cover';
+async function getVimeusSerieDetails(tmdbId, imdbId, season = null, episode = null) {
+    let identifier = tmdbId ? `tmdb=${tmdbId}` : `imdb=${imdbId}`;
+    if (season && episode) {
+        identifier += `&se=${season}&ep=${episode}`;
     }
+    const embedUrl = `https://vimeus.com/e/serie?${identifier}&view_key=${VIMEUS_VIEW_KEY}`;
+    return { embedUrl };
+}
+
+// Función para obtener detalles completos desde Vimeus (incluyendo imágenes)
+async function getVimeusContentDetails(contentId, type) {
+    // Vimeus no tiene endpoint de detalles, usamos el listado para encontrar el item
+    const endpoint = type === 'movies' ? '/listing/movies' : '/listing/series';
+    let page = 1;
+    let hasMore = true;
+    
+    while (hasMore) {
+        const url = `${VIMEUS_API_BASE}${endpoint}?page=${page}`;
+        try {
+            const response = await fetch(url, {
+                headers: { 'X-API-Key': VIMEUS_API_KEY }
+            });
+            const data = await response.json();
+            
+            if (data.error === false && data.data) {
+                const items = type === 'movies' ? data.data.movies : data.data.series;
+                const found = items.find(item => item.id === contentId || item.tmdb_id == contentId);
+                
+                if (found) {
+                    return found;
+                }
+                
+                hasMore = data.data.pagination.has_next;
+                page++;
+            } else {
+                hasMore = false;
+            }
+        } catch (error) {
+            console.error('Error obteniendo detalles:', error);
+            hasMore = false;
+        }
+    }
+    return null;
 }
 
 // ==================== FUNCIONES DE AUTENTICACIÓN ====================
@@ -465,7 +518,7 @@ async function loadMovies() {
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <td style="padding:12px;">${escapeHtml(data.title || '—')}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
+                    <td style="padding:12px;"><code>${data.tmdbId ? 'TMDB: ' + data.tmdbId : data.imdbId ? 'IMDb: ' + data.imdbId : '—'}</code></td>
                     <td style="padding:12px;">
                         <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
                         <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
@@ -473,7 +526,7 @@ async function loadMovies() {
                 </tr>
             `;
         });
-        document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay películas</td></tr>';
+        document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay películas. Haz clic en "+ Agregar desde Vimeus" para empezar.</td></tr>';
     } catch (error) {
         console.error('Error loading movies:', error);
     }
@@ -487,23 +540,23 @@ async function loadSeries() {
         const snapshot = await db.collection('series').get();
         
         if (snapshot.size === 0) {
-            seriesDiv.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "+ Agregar Serie" para crear una.</div>';
+            seriesDiv.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "+ Agregar desde Vimeus" para crear una.</div>';
             return;
         }
         
-        let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse;"><thead><tr><th style="padding:12px; color:#c084fc;">Título</th><th style="padding:12px; color:#c084fc;">Imagen</th><th style="padding:12px; color:#c084fc;">Año</th><th style="padding:12px; color:#c084fc;">Acciones</th></tr></thead><tbody>';
+        let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse;"><thead><tr><th style="padding:12px; color:#c084fc;">Título</th><th style="padding:12px; color:#c084fc;">Imagen</th><th style="padding:12px; color:#c084fc;">ID</th><th style="padding:12px; color:#c084fc;">Acciones</th></tr></thead><tbody>';
         
         snapshot.forEach(doc => {
             const data = doc.data();
             const title = data.title || 'Sin título';
-            const year = data.year || '—';
             const imageUrl = data.imageUrl || '';
+            const identifier = data.tmdbId ? `TMDB: ${data.tmdbId}` : data.imdbId ? `IMDb: ${data.imdbId}` : '—';
             
             html += `
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <td style="padding:12px;">${escapeHtml(title)}</td>
                     <td style="padding:12px;">${imageUrl ? `<img src="${imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-                    <td style="padding:12px;">${escapeHtml(year)}</td>
+                    <td style="padding:12px;"><code>${escapeHtml(identifier)}</code></td>
                     <td style="padding:12px;">
                         <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b; border:none; padding:5px 10px; border-radius:20px; cursor:pointer;">✏️</button>
                         <button onclick="deleteItem('series', '${doc.id}')" style="background:#ef4444; border:none; padding:5px 10px; border-radius:20px; cursor:pointer;">🗑️</button>
@@ -564,7 +617,7 @@ async function loadRadios() {
                 </tr>
             `;
         });
-        document.getElementById('radiosTable').innerHTML = html || '</table><td colspan="4" style="padding:40px; text-align:center;">No hay radios</td></tr>';
+        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay radios</td></tr>';
     } catch (error) {
         console.error('Error loading radios:', error);
     }
@@ -615,7 +668,233 @@ async function loadCodes() {
     }
 }
 
-// ==================== GESTIÓN DE SERIES (TEMPORADAS Y EPISODIOS) ====================
+// ==================== MODAL DE BÚSQUEDA EN VIMEUS ====================
+function createVimeusSearchUI(type, onSelect) {
+    const container = document.createElement('div');
+    container.className = 'form-group';
+    container.innerHTML = `
+        <label>🔍 Buscar en Vimeus <span style="background:#667eea; padding:2px 8px; border-radius:20px; font-size:10px; margin-left:8px;">Vimeus.com</span></label>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="vimeusSearchInput" placeholder="Ej: Inception, Game of Thrones..." style="flex: 1;">
+            <button type="button" id="vimeusSearchBtn" class="info" style="width: auto; padding: 12px 20px;">Buscar</button>
+        </div>
+        <div id="vimeusResults" class="search-results" style="display:none;"></div>
+    `;
+    
+    const searchInput = container.querySelector('#vimeusSearchInput');
+    const searchBtn = container.querySelector('#vimeusSearchBtn');
+    const resultsDiv = container.querySelector('#vimeusResults');
+    
+    searchBtn.onclick = async () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div class="loading-text">🔍 Buscando en Vimeus...</div>';
+        
+        const results = await searchVimeusContent(query, type);
+        
+        if (results.length === 0) {
+            resultsDiv.innerHTML = '<div class="loading-text">❌ No se encontraron resultados en Vimeus</div>';
+            return;
+        }
+        
+        resultsDiv.innerHTML = '';
+        results.forEach(result => {
+            const title = result.title;
+            const poster = result.poster ? `${TMDB_IMAGE_BASE}${result.poster}` : '';
+            const identifier = result.tmdb_id ? `TMDB: ${result.tmdb_id}` : result.imdb_id ? `IMDb: ${result.imdb_id}` : 'Sin ID';
+            
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.onclick = async () => {
+                resultsDiv.innerHTML = '<div class="loading-text">📥 Importando contenido desde Vimeus...</div>';
+                
+                // Obtener el embed URL automáticamente
+                let embedUrl = '';
+                if (type === 'movies') {
+                    const movieEmbed = await getVimeusMovieDetails(result.tmdb_id, result.imdb_id);
+                    embedUrl = movieEmbed.embedUrl;
+                } else {
+                    const serieEmbed = await getVimeusSerieDetails(result.tmdb_id, result.imdb_id);
+                    embedUrl = serieEmbed.embedUrl;
+                }
+                
+                onSelect({
+                    title: title,
+                    tmdbId: result.tmdb_id,
+                    imdbId: result.imdb_id,
+                    imageUrl: poster,
+                    backdropUrl: result.backdrop ? `${TMDB_BACKDROP_BASE}${result.backdrop}` : '',
+                    embedUrl: embedUrl,
+                    totalSeasons: result.total_seasons || null,
+                    totalEpisodes: result.total_episodes || null
+                });
+                
+                resultsDiv.style.display = 'none';
+                searchInput.value = '';
+            };
+            
+            item.innerHTML = `
+                ${poster ? `<img src="${poster}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
+                <div style="flex:1">
+                    <strong>${escapeHtml(title)}</strong>
+                    <div style="font-size:12px; color:#94a3b8;">${identifier}</div>
+                </div>
+                <button style="background:#10b981; border:none; padding:5px 15px; border-radius:40px; color:white; cursor:pointer;">Importar</button>
+            `;
+            resultsDiv.appendChild(item);
+        });
+    };
+    
+    return container;
+}
+
+// ==================== MODAL DE EDICIÓN ====================
+function openAddModal(type) {
+    if (isGuest) { alert('Modo invitado'); return; }
+    currentEditType = type;
+    currentEditId = null;
+    
+    const modal = document.getElementById('contentModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalFields = document.getElementById('modalFields');
+    
+    if (type === 'series') {
+        modalTitle.innerText = '📺 Nueva Serie (desde Vimeus)';
+        modalFields.innerHTML = `
+            <div id="vimeusSearchContainer"></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la serie"></div>
+            <div class="form-group"><label>ID TMDB (opcional)</label><input id="edit_tmdbId" placeholder="Ej: 1399"></div>
+            <div class="form-group"><label>ID IMDb (opcional)</label><input id="edit_imdbId" placeholder="Ej: tt0944947"></div>
+            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
+            <div class="form-group"><label>URL del Reproductor (generado automáticamente)</label><input id="edit_embedUrl" placeholder="https://vimeus.com/e/serie?..."></div>
+            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la serie..."></textarea></div>
+            <div id="seasonsContainer"></div>
+        `;
+        
+        // Agregar buscador Vimeus
+        const searchContainer = document.getElementById('vimeusSearchContainer');
+        const searchUI = createVimeusSearchUI(type, (vimeusData) => fillFormWithVimeusData(type, vimeusData));
+        searchContainer.appendChild(searchUI);
+        
+        // Inicializar sección de temporadas
+        renderSeasonsAndEpisodes([]);
+        
+    } else if (type === 'movies') {
+        modalTitle.innerText = '🎬 Nueva Película (desde Vimeus)';
+        modalFields.innerHTML = `
+            <div id="vimeusSearchContainer"></div>
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la película"></div>
+            <div class="form-group"><label>ID TMDB (opcional)</label><input id="edit_tmdbId" placeholder="Ej: 550"></div>
+            <div class="form-group"><label>ID IMDb (opcional)</label><input id="edit_imdbId" placeholder="Ej: tt0137523"></div>
+            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
+            <div class="form-group"><label>URL del Reproductor (generado automáticamente)</label><input id="edit_embedUrl" placeholder="https://vimeus.com/e/movie?..."></div>
+            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
+            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
+        `;
+        
+        // Agregar buscador Vimeus
+        const searchContainer = document.getElementById('vimeusSearchContainer');
+        const searchUI = createVimeusSearchUI(type, (vimeusData) => fillFormWithVimeusData(type, vimeusData));
+        searchContainer.appendChild(searchUI);
+        
+    } else if (type === 'music') {
+        modalTitle.innerText = '🎵 Nueva Canción';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Audio/Video</label><input id="edit_audioUrl" placeholder="https://..."></div>
+        `;
+    } else if (type === 'radios') {
+        modalTitle.innerText = '📻 Nueva Radio';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Nombre *</label><input id="edit_name" placeholder="Nombre"></div>
+            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
+            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Género"></div>
+        `;
+    } else if (type === 'musicVideos') {
+        modalTitle.innerText = '🎤 Nuevo Video Musical';
+        modalFields.innerHTML = `
+            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
+            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
+            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
+        `;
+    }
+    
+    const imageInput = document.getElementById('edit_imageUrl');
+    const preview = document.getElementById('imagePreview');
+    if (imageInput && preview) {
+        imageInput.oninput = () => {
+            if (imageInput.value) {
+                preview.style.backgroundImage = `url('${imageInput.value}')`;
+                preview.style.backgroundSize = 'cover';
+            } else {
+                preview.style.backgroundImage = '';
+            }
+        };
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function fillFormWithVimeusData(type, vimeusData) {
+    if (type === 'movies') {
+        if (document.getElementById('edit_title')) document.getElementById('edit_title').value = vimeusData.title;
+        if (document.getElementById('edit_tmdbId')) document.getElementById('edit_tmdbId').value = vimeusData.tmdbId || '';
+        if (document.getElementById('edit_imdbId')) document.getElementById('edit_imdbId').value = vimeusData.imdbId || '';
+        if (document.getElementById('edit_imageUrl')) document.getElementById('edit_imageUrl').value = vimeusData.imageUrl || '';
+        if (document.getElementById('edit_backdropUrl')) document.getElementById('edit_backdropUrl').value = vimeusData.backdropUrl || '';
+        if (document.getElementById('edit_embedUrl')) document.getElementById('edit_embedUrl').value = vimeusData.embedUrl || '';
+        
+        const preview = document.getElementById('imagePreview');
+        if (preview && vimeusData.imageUrl) {
+            preview.style.backgroundImage = `url('${vimeusData.imageUrl}')`;
+            preview.style.backgroundSize = 'cover';
+        }
+    } else if (type === 'series') {
+        if (document.getElementById('edit_title')) document.getElementById('edit_title').value = vimeusData.title;
+        if (document.getElementById('edit_tmdbId')) document.getElementById('edit_tmdbId').value = vimeusData.tmdbId || '';
+        if (document.getElementById('edit_imdbId')) document.getElementById('edit_imdbId').value = vimeusData.imdbId || '';
+        if (document.getElementById('edit_imageUrl')) document.getElementById('edit_imageUrl').value = vimeusData.imageUrl || '';
+        if (document.getElementById('edit_backdropUrl')) document.getElementById('edit_backdropUrl').value = vimeusData.backdropUrl || '';
+        if (document.getElementById('edit_embedUrl')) document.getElementById('edit_embedUrl').value = vimeusData.embedUrl || '';
+        
+        const preview = document.getElementById('imagePreview');
+        if (preview && vimeusData.imageUrl) {
+            preview.style.backgroundImage = `url('${vimeusData.imageUrl}')`;
+            preview.style.backgroundSize = 'cover';
+        }
+        
+        // Generar temporadas automáticamente si hay información
+        if (vimeusData.totalSeasons && vimeusData.totalSeasons > 0) {
+            const seasons = [];
+            for (let i = 1; i <= vimeusData.totalSeasons; i++) {
+                seasons.push({
+                    number: i,
+                    title: `Temporada ${i}`,
+                    episodes: []
+                });
+            }
+            renderSeasonsAndEpisodes(seasons);
+        }
+    }
+}
+
 function renderSeasonsAndEpisodes(seasons = []) {
     const container = document.getElementById('seasonsContainer');
     if (!container) return;
@@ -672,7 +951,7 @@ function renderSeasonsAndEpisodes(seasons = []) {
                             <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
                             <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
                         </div>
-                        <div class="form-group"><label>URL del Video</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+                        <div class="form-group"><label>URL del Video (opcional, si es diferente al embed general)</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://vimeus.com/e/serie?..."></div>
                     </div>
                 `;
             });
@@ -755,168 +1034,6 @@ function collectSeasonsFromForm() {
     return seasons;
 }
 
-// ==================== MODAL DE EDICIÓN CON TMDB ====================
-function createSearchUI(type, onSelect) {
-    const container = document.createElement('div');
-    container.className = 'form-group';
-    container.innerHTML = `
-        <label>🔍 Buscar en TMDB <span style="background:#01b4e4; padding:2px 8px; border-radius:20px; font-size:10px; margin-left:8px;">The Movie Database</span></label>
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="tmdbSearchInput" placeholder="Ej: Inception, The Last of Us..." style="flex: 1;">
-            <button type="button" id="tmdbSearchBtn" class="info" style="width: auto; padding: 12px 20px;">Buscar</button>
-        </div>
-        <div id="tmdbResults" class="search-results" style="display:none;"></div>
-    `;
-    
-    const searchInput = container.querySelector('#tmdbSearchInput');
-    const searchBtn = container.querySelector('#tmdbSearchBtn');
-    const resultsDiv = container.querySelector('#tmdbResults');
-    
-    searchBtn.onclick = async () => {
-        const query = searchInput.value.trim();
-        if (!query) return;
-        
-        resultsDiv.style.display = 'block';
-        resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Buscando...</div>';
-        
-        const results = await searchTMDB(query, type);
-        
-        if (results.length === 0) {
-            resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ No se encontraron resultados</div>';
-            return;
-        }
-        
-        resultsDiv.innerHTML = '';
-        results.forEach(result => {
-            const title = result.title || result.name;
-            const year = result.release_date?.substring(0,4) || result.first_air_date?.substring(0,4) || '?';
-            const poster = result.poster_path ? `${TMDB_IMAGE_BASE}${result.poster_path}` : '';
-            
-            const item = document.createElement('div');
-            item.className = 'search-result-item';
-            item.onclick = async () => {
-                resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Cargando detalles...</div>';
-                const details = await getTMDBDetails(type, result.id);
-                if (details) {
-                    onSelect(details);
-                    resultsDiv.style.display = 'none';
-                    searchInput.value = '';
-                } else {
-                    resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ Error al cargar detalles</div>';
-                }
-            };
-            
-            item.innerHTML = `
-                ${poster ? `<img src="${poster}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
-                <div style="flex:1">
-                    <strong>${escapeHtml(title)}</strong>
-                    <div style="font-size:12px; color:#94a3b8;">${year} • ID: ${result.id}</div>
-                </div>
-                <button style="background:#10b981; border:none; padding:5px 15px; border-radius:40px; color:white; cursor:pointer;">Seleccionar</button>
-            `;
-            resultsDiv.appendChild(item);
-        });
-    };
-    
-    return container;
-}
-
-function openAddModal(type) {
-    if (isGuest) { alert('Modo invitado'); return; }
-    currentEditType = type;
-    currentEditId = null;
-    
-    const modal = document.getElementById('contentModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalFields = document.getElementById('modalFields');
-    
-    if (type === 'series') {
-        modalTitle.innerText = '📺 Nueva Serie';
-        modalFields.innerHTML = `
-            <div id="tmdbSearchContainer"></div>
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la serie"></div>
-            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la serie..."></textarea></div>
-            <div id="seasonsContainer"></div>
-        `;
-        
-        // Agregar buscador TMDB
-        const searchContainer = document.getElementById('tmdbSearchContainer');
-        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
-        searchContainer.appendChild(searchUI);
-        
-        // Inicializar sección de temporadas
-        renderSeasonsAndEpisodes([]);
-        
-    } else if (type === 'movies') {
-        modalTitle.innerText = '🎬 Nueva Película';
-        modalFields.innerHTML = `
-            <div id="tmdbSearchContainer"></div>
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la película"></div>
-            <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://www.youtube.com/embed/..."></div>
-            <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
-            <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
-        `;
-        
-        // Agregar buscador TMDB
-        const searchContainer = document.getElementById('tmdbSearchContainer');
-        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
-        searchContainer.appendChild(searchUI);
-        
-    } else if (type === 'music') {
-        modalTitle.innerText = '🎵 Nueva Canción';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Audio/Video</label><input id="edit_audioUrl" placeholder="https://..."></div>
-        `;
-    } else if (type === 'radios') {
-        modalTitle.innerText = '📻 Nueva Radio';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Nombre *</label><input id="edit_name" placeholder="Nombre"></div>
-            <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" placeholder="https://..."></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>País</label><input id="edit_country" placeholder="País"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Género"></div>
-        `;
-    } else if (type === 'musicVideos') {
-        modalTitle.innerText = '🎤 Nuevo Video Musical';
-        modalFields.innerHTML = `
-            <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título"></div>
-            <div class="form-group"><label>Artista</label><input id="edit_artist" placeholder="Artista"></div>
-            <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" placeholder="https://..."></div>
-            <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://..."></div>
-        `;
-    }
-    
-    const imageInput = document.getElementById('edit_imageUrl');
-    const preview = document.getElementById('imagePreview');
-    if (imageInput && preview) {
-        imageInput.oninput = () => {
-            if (imageInput.value) {
-                preview.style.backgroundImage = `url('${imageInput.value}')`;
-                preview.style.backgroundSize = 'cover';
-            } else {
-                preview.style.backgroundImage = '';
-            }
-        };
-    }
-    
-    modal.style.display = 'flex';
-}
-
 window.openEditModal = async (type, id) => {
     if (isGuest) { alert('Modo invitado'); return; }
     try {
@@ -933,44 +1050,45 @@ window.openEditModal = async (type, id) => {
             if (type === 'series') {
                 modalTitle.innerText = '📺 Editar Serie';
                 modalFields.innerHTML = `
-                    <div id="tmdbSearchContainer"></div>
+                    <div id="vimeusSearchContainer"></div>
                     <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+                    <div class="form-group"><label>ID TMDB</label><input id="edit_tmdbId" value="${escapeHtml(data.tmdbId || '')}"></div>
+                    <div class="form-group"><label>ID IMDb</label><input id="edit_imdbId" value="${escapeHtml(data.imdbId || '')}"></div>
                     <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
                     <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
                     <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" value="${escapeHtml(data.backdropUrl || '')}"></div>
+                    <div class="form-group"><label>URL del Reproductor</label><input id="edit_embedUrl" value="${escapeHtml(data.embedUrl || '')}"></div>
                     <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
                     <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
                     <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
                     <div id="seasonsContainer"></div>
                 `;
                 
-                // Agregar buscador TMDB
-                const searchContainer = document.getElementById('tmdbSearchContainer');
-                const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
+                const searchContainer = document.getElementById('vimeusSearchContainer');
+                const searchUI = createVimeusSearchUI(type, (vimeusData) => fillFormWithVimeusData(type, vimeusData));
                 searchContainer.appendChild(searchUI);
                 
-                // Renderizar temporadas existentes
                 renderSeasonsAndEpisodes(data.seasons || []);
                 
             } else if (type === 'movies') {
                 modalTitle.innerText = '🎬 Editar Película';
                 modalFields.innerHTML = `
-                    <div id="tmdbSearchContainer"></div>
+                    <div id="vimeusSearchContainer"></div>
                     <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
+                    <div class="form-group"><label>ID TMDB</label><input id="edit_tmdbId" value="${escapeHtml(data.tmdbId || '')}"></div>
+                    <div class="form-group"><label>ID IMDb</label><input id="edit_imdbId" value="${escapeHtml(data.imdbId || '')}"></div>
                     <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
                     <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
                     <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" value="${escapeHtml(data.backdropUrl || '')}"></div>
-                    <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
+                    <div class="form-group"><label>URL del Reproductor</label><input id="edit_embedUrl" value="${escapeHtml(data.embedUrl || '')}"></div>
                     <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
                     <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
                     <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
                 `;
                 
-                // Agregar buscador TMDB
-                const searchContainer = document.getElementById('tmdbSearchContainer');
-                const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
+                const searchContainer = document.getElementById('vimeusSearchContainer');
+                const searchUI = createVimeusSearchUI(type, (vimeusData) => fillFormWithVimeusData(type, vimeusData));
                 searchContainer.appendChild(searchUI);
-                
             } else {
                 openAddModal(type);
                 return;
@@ -1008,17 +1126,22 @@ async function saveContent() {
         
         if (type === 'series') {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_tmdbId')?.value) updateData.tmdbId = document.getElementById('edit_tmdbId').value;
+            if (document.getElementById('edit_imdbId')?.value) updateData.imdbId = document.getElementById('edit_imdbId').value;
             if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
             if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
+            if (document.getElementById('edit_embedUrl')?.value) updateData.embedUrl = document.getElementById('edit_embedUrl').value;
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
             updateData.seasons = collectSeasonsFromForm();
         } else if (type === 'movies') {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_tmdbId')?.value) updateData.tmdbId = document.getElementById('edit_tmdbId').value;
+            if (document.getElementById('edit_imdbId')?.value) updateData.imdbId = document.getElementById('edit_imdbId').value;
             if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
             if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
-            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+            if (document.getElementById('edit_embedUrl')?.value) updateData.embedUrl = document.getElementById('edit_embedUrl').value;
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
@@ -1043,7 +1166,7 @@ async function saveContent() {
         if (!currentEditId) updateData.createdAt = new Date();
         
         await db.collection(type).doc(id).set(updateData, { merge: true });
-        alert('✅ Guardado correctamente');
+        alert('✅ Contenido guardado correctamente con enlaces de Vimeus');
         closeModal();
         refreshCurrentSection();
     } catch (error) {
@@ -1148,6 +1271,16 @@ async function generateNewCode() {
     } catch (error) {
         console.error(error);
     }
+}
+
+// Función para generar embed URLs automáticamente basado en IDs
+async function generateEmbedUrl(type, tmdbId, imdbId, season = null, episode = null) {
+    if (type === 'movies') {
+        return await getVimeusMovieDetails(tmdbId, imdbId).then(res => res.embedUrl);
+    } else if (type === 'series') {
+        return await getVimeusSerieDetails(tmdbId, imdbId, season, episode).then(res => res.embedUrl);
+    }
+    return '';
 }
 
 // ==================== EVENT LISTENERS ====================
