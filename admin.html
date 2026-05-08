@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin</title>
+    <title>StreamHub Admin - Con TMDB</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -113,6 +113,62 @@
         }
         .search-result-item:hover { background: #334155; }
         .loading-text { text-align: center; padding: 20px; color: #94a3b8; }
+        
+        .seasons-container {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
+        }
+        .seasons-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #c084fc;
+        }
+        .season-card {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .season-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .season-number-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #c084fc;
+        }
+        .season-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-icon { padding: 6px 12px; font-size: 0.75rem; }
+        .episodes-list { margin-left: 20px; margin-top: 15px; }
+        .episode-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .episode-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .add-episode-btn { margin-top: 10px; width: 100%; }
+        .add-season-btn { margin-top: 15px; width: 100%; background: linear-gradient(90deg, #10b981, #059669); }
     </style>
 </head>
 <body>
@@ -159,14 +215,7 @@
             <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
             <div style="overflow-x: auto;">
                 <table style="width:100%; border-collapse: collapse;">
-                    <thead>
-                        <tr>
-                            <th style="padding:12px; text-align:left; color:#c084fc;">Email</th>
-                            <th style="padding:12px; text-align:left; color:#c084fc;">Rol</th>
-                            <th style="padding:12px; text-align:left; color:#c084fc;">Estado</th>
-                            <th style="padding:12px; text-align:left; color:#c084fc;">Acciones</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th style="padding:12px;">Email</th><th style="padding:12px;">Rol</th><th style="padding:12px;">Estado</th><th style="padding:12px;">Acciones</th></tr></thead>
                     <tbody id="usersTable"></tbody>
                 </table>
             </div>
@@ -177,9 +226,7 @@
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎬 Películas</h2><button id="addMovieBtn" class="success">➕ Agregar</button></div>
             <div style="overflow-x: auto;">
                 <table style="width:100%; border-collapse: collapse;">
-                    <thead>
-                        <tr><th style="padding:12px;">Título</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr>
-                    </thead>
+                    <thead><tr><th style="padding:12px;">Título</th><th style="padding:12px;">Imagen</th><th style="padding:12px;">URL</th><th style="padding:12px;">Acciones</th></tr></thead>
                     <tbody id="moviesTable"></tbody>
                 </table>
             </div>
@@ -271,6 +318,59 @@ let isGuest = false;
 let currentEditType = null;
 let currentEditId = null;
 
+// Configuración TMDB
+const TMDB_API_KEY = "62a139fe21b6d296ab12661489a6934d";
+const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
+
+// ==================== FUNCIONES TMDB ====================
+async function searchTMDB(query, type) {
+    const searchType = type === 'movies' ? 'movie' : 'tv';
+    const url = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=es`;
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.results || [];
+    } catch (error) {
+        console.error('Error buscando en TMDB:', error);
+        return [];
+    }
+}
+
+async function getTMDBDetails(type, id) {
+    const searchType = type === 'movies' ? 'movie' : 'tv';
+    const url = `https://api.themoviedb.org/3/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=es`;
+    try {
+        const response = await fetch(url);
+        return await response.json();
+    } catch (error) {
+        console.error('Error obteniendo detalles de TMDB:', error);
+        return null;
+    }
+}
+
+function fillFormWithTMDBData(type, data) {
+    const title = data.title || data.name;
+    const year = (data.release_date || data.first_air_date || '').substring(0,4);
+    const posterPath = data.poster_path ? `${TMDB_IMAGE_BASE}${data.poster_path}` : '';
+    const backdropPath = data.backdrop_path ? `${TMDB_BACKDROP_BASE}${data.backdrop_path}` : '';
+    const overview = data.overview || '';
+    const genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
+    
+    if (document.getElementById('edit_title')) document.getElementById('edit_title').value = title;
+    if (document.getElementById('edit_imageUrl')) document.getElementById('edit_imageUrl').value = posterPath;
+    if (document.getElementById('edit_backdropUrl')) document.getElementById('edit_backdropUrl').value = backdropPath;
+    if (document.getElementById('edit_year')) document.getElementById('edit_year').value = year;
+    if (document.getElementById('edit_genre')) document.getElementById('edit_genre').value = genres;
+    if (document.getElementById('edit_overview')) document.getElementById('edit_overview').value = overview;
+    
+    const preview = document.getElementById('imagePreview');
+    if (preview && posterPath) {
+        preview.style.backgroundImage = `url('${posterPath}')`;
+        preview.style.backgroundSize = 'cover';
+    }
+}
+
 // ==================== FUNCIONES DE AUTENTICACIÓN ====================
 async function isAdmin(email) {
     const doc = await db.collection('admin').doc('config').get();
@@ -316,15 +416,12 @@ async function loadStats() {
     }
 }
 
-// ==================== LOAD USERS FUNCIONAL ====================
 async function loadUsers() {
     const container = document.getElementById('usersTable');
     if (!container) return;
     
     try {
         const users = await db.collection('users').get();
-        console.log('Usuarios encontrados:', users.size);
-        
         if (users.size === 0) {
             container.innerHTML = '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay usuarios registrados</td></tr>';
             return;
@@ -351,7 +448,6 @@ async function loadUsers() {
                 </tr>
             `;
         });
-        
         container.innerHTML = html;
     } catch (error) {
         console.error('Error loading users:', error);
@@ -389,7 +485,6 @@ async function loadSeries() {
     
     try {
         const snapshot = await db.collection('series').get();
-        console.log('Series encontradas:', snapshot.size);
         
         if (snapshot.size === 0) {
             seriesDiv.innerHTML = '<div class="loading-text">📭 No hay series. Haz clic en "+ Agregar Serie" para crear una.</div>';
@@ -469,7 +564,7 @@ async function loadRadios() {
                 </tr>
             `;
         });
-        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4" style="padding:40px; text-align:center;">No hay radios</td></tr>';
+        document.getElementById('radiosTable').innerHTML = html || '</table><td colspan="4" style="padding:40px; text-align:center;">No hay radios</td></tr>';
     } catch (error) {
         console.error('Error loading radios:', error);
     }
@@ -520,7 +615,212 @@ async function loadCodes() {
     }
 }
 
-// ==================== FUNCIONES DE EDICIÓN ====================
+// ==================== GESTIÓN DE SERIES (TEMPORADAS Y EPISODIOS) ====================
+function renderSeasonsAndEpisodes(seasons = []) {
+    const container = document.getElementById('seasonsContainer');
+    if (!container) return;
+    
+    if (!seasons || seasons.length === 0) {
+        container.innerHTML = `
+            <div class="seasons-container">
+                <div class="seasons-title">📺 Temporadas y Episodios</div>
+                <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 16px;">
+                    <p>No hay temporadas creadas.</p>
+                    <button type="button" id="addSeasonMainBtn" class="add-season-btn" style="margin-top: 15px;">+ Agregar Primera Temporada</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('addSeasonMainBtn')?.addEventListener('click', () => addSeason());
+        return;
+    }
+    
+    let html = `
+        <div class="seasons-container">
+            <div class="seasons-title">📺 Temporadas y Episodios</div>
+    `;
+    
+    seasons.forEach((season, seasonIdx) => {
+        html += `
+            <div class="season-card" data-season-index="${seasonIdx}">
+                <div class="season-header">
+                    <div class="season-number-title">Temporada ${season.number}</div>
+                    <div class="season-buttons">
+                        <button type="button" class="info btn-icon" onclick="addEpisode(${seasonIdx})">+ Episodio</button>
+                        <button type="button" class="danger btn-icon" onclick="removeSeason(${seasonIdx})">🗑️ Eliminar Temporada</button>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Número de Temporada</label><input type="number" class="season-number" value="${season.number}" placeholder="1"></div>
+                    <div class="form-group"><label>Título de Temporada (opcional)</label><input type="text" class="season-title-input" value="${escapeHtml(season.title || '')}" placeholder="Ej: Parte 1"></div>
+                </div>
+                <div class="episodes-list">
+                    <div class="episodes-title">📋 Episodios</div>
+        `;
+        
+        const episodes = season.episodes || [];
+        if (episodes.length === 0) {
+            html += `<div style="padding: 10px; text-align: center; color: #94a3b8;">No hay episodios en esta temporada</div>`;
+        } else {
+            episodes.forEach((ep, epIdx) => {
+                html += `
+                    <div class="episode-item" data-episode-index="${epIdx}">
+                        <div class="episode-header">
+                            <span><strong>Episodio ${ep.number}</strong>: ${escapeHtml(ep.title)}</span>
+                            <button type="button" class="danger btn-icon" onclick="removeEpisode(${seasonIdx}, ${epIdx})">✕ Eliminar</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
+                            <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
+                        </div>
+                        <div class="form-group"><label>URL del Video</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `
+                    <button type="button" class="info btn-icon add-episode-btn" onclick="addEpisode(${seasonIdx})">+ Agregar Episodio a esta Temporada</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `<button type="button" id="addSeasonBtn" class="add-season-btn">+ Agregar Nueva Temporada</button></div>`;
+    container.innerHTML = html;
+    
+    document.getElementById('addSeasonBtn')?.addEventListener('click', () => addSeason());
+}
+
+function addSeason() {
+    const seasons = collectSeasonsFromForm();
+    const newSeasonNumber = seasons.length + 1;
+    seasons.push({
+        number: newSeasonNumber,
+        title: `Temporada ${newSeasonNumber}`,
+        episodes: []
+    });
+    renderSeasonsAndEpisodes(seasons);
+}
+
+function addEpisode(seasonIdx) {
+    const seasons = collectSeasonsFromForm();
+    const newEpNumber = (seasons[seasonIdx].episodes?.length || 0) + 1;
+    if (!seasons[seasonIdx].episodes) seasons[seasonIdx].episodes = [];
+    seasons[seasonIdx].episodes.push({
+        number: newEpNumber,
+        title: `Episodio ${newEpNumber}`,
+        videoUrl: ''
+    });
+    renderSeasonsAndEpisodes(seasons);
+}
+
+function removeSeason(seasonIdx) {
+    if (confirm('¿Eliminar esta temporada y TODOS sus episodios? Esta acción no se puede deshacer.')) {
+        const seasons = collectSeasonsFromForm();
+        seasons.splice(seasonIdx, 1);
+        seasons.forEach((s, idx) => s.number = idx + 1);
+        renderSeasonsAndEpisodes(seasons);
+    }
+}
+
+function removeEpisode(seasonIdx, episodeIdx) {
+    if (confirm('¿Eliminar este episodio?')) {
+        const seasons = collectSeasonsFromForm();
+        seasons[seasonIdx].episodes.splice(episodeIdx, 1);
+        seasons[seasonIdx].episodes.forEach((ep, idx) => ep.number = idx + 1);
+        renderSeasonsAndEpisodes(seasons);
+    }
+}
+
+function collectSeasonsFromForm() {
+    const seasons = [];
+    const seasonCards = document.querySelectorAll('.season-card');
+    seasonCards.forEach(card => {
+        const seasonNumber = parseInt(card.querySelector('.season-number')?.value || 0);
+        const seasonTitle = card.querySelector('.season-title-input')?.value || '';
+        const episodes = [];
+        const episodeItems = card.querySelectorAll('.episode-item');
+        episodeItems.forEach(epItem => {
+            const epNumber = parseInt(epItem.querySelector('.episode-number')?.value || 0);
+            const epTitle = epItem.querySelector('.episode-title-input')?.value || '';
+            const epUrl = epItem.querySelector('.episode-url')?.value || '';
+            if (epNumber > 0 && epTitle) {
+                episodes.push({ number: epNumber, title: epTitle, videoUrl: epUrl });
+            }
+        });
+        if (seasonNumber > 0) {
+            seasons.push({ number: seasonNumber, title: seasonTitle, episodes: episodes });
+        }
+    });
+    return seasons;
+}
+
+// ==================== MODAL DE EDICIÓN CON TMDB ====================
+function createSearchUI(type, onSelect) {
+    const container = document.createElement('div');
+    container.className = 'form-group';
+    container.innerHTML = `
+        <label>🔍 Buscar en TMDB <span style="background:#01b4e4; padding:2px 8px; border-radius:20px; font-size:10px; margin-left:8px;">The Movie Database</span></label>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="tmdbSearchInput" placeholder="Ej: Inception, The Last of Us..." style="flex: 1;">
+            <button type="button" id="tmdbSearchBtn" class="info" style="width: auto; padding: 12px 20px;">Buscar</button>
+        </div>
+        <div id="tmdbResults" class="search-results" style="display:none;"></div>
+    `;
+    
+    const searchInput = container.querySelector('#tmdbSearchInput');
+    const searchBtn = container.querySelector('#tmdbSearchBtn');
+    const resultsDiv = container.querySelector('#tmdbResults');
+    
+    searchBtn.onclick = async () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Buscando...</div>';
+        
+        const results = await searchTMDB(query, type);
+        
+        if (results.length === 0) {
+            resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ No se encontraron resultados</div>';
+            return;
+        }
+        
+        resultsDiv.innerHTML = '';
+        results.forEach(result => {
+            const title = result.title || result.name;
+            const year = result.release_date?.substring(0,4) || result.first_air_date?.substring(0,4) || '?';
+            const poster = result.poster_path ? `${TMDB_IMAGE_BASE}${result.poster_path}` : '';
+            
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.onclick = async () => {
+                resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">Cargando detalles...</div>';
+                const details = await getTMDBDetails(type, result.id);
+                if (details) {
+                    onSelect(details);
+                    resultsDiv.style.display = 'none';
+                    searchInput.value = '';
+                } else {
+                    resultsDiv.innerHTML = '<div style="padding:15px; text-align:center;">❌ Error al cargar detalles</div>';
+                }
+            };
+            
+            item.innerHTML = `
+                ${poster ? `<img src="${poster}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '<div style="width:40px;height:60px;background:#334155;border-radius:8px;display:flex;align-items:center;justify-content:center;">🎬</div>'}
+                <div style="flex:1">
+                    <strong>${escapeHtml(title)}</strong>
+                    <div style="font-size:12px; color:#94a3b8;">${year} • ID: ${result.id}</div>
+                </div>
+                <button style="background:#10b981; border:none; padding:5px 15px; border-radius:40px; color:white; cursor:pointer;">Seleccionar</button>
+            `;
+            resultsDiv.appendChild(item);
+        });
+    };
+    
+    return container;
+}
+
 function openAddModal(type) {
     if (isGuest) { alert('Modo invitado'); return; }
     currentEditType = type;
@@ -533,24 +833,44 @@ function openAddModal(type) {
     if (type === 'series') {
         modalTitle.innerText = '📺 Nueva Serie';
         modalFields.innerHTML = `
+            <div id="tmdbSearchContainer"></div>
             <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la serie"></div>
             <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
             <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
             <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
             <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis de la serie..."></textarea></div>
+            <div id="seasonsContainer"></div>
         `;
+        
+        // Agregar buscador TMDB
+        const searchContainer = document.getElementById('tmdbSearchContainer');
+        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
+        searchContainer.appendChild(searchUI);
+        
+        // Inicializar sección de temporadas
+        renderSeasonsAndEpisodes([]);
+        
     } else if (type === 'movies') {
         modalTitle.innerText = '🎬 Nueva Película';
         modalFields.innerHTML = `
+            <div id="tmdbSearchContainer"></div>
             <div class="form-group"><label>Título *</label><input id="edit_title" placeholder="Título de la película"></div>
             <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" placeholder="https://image.tmdb.org/t/p/w500/ejemplo.jpg"></div>
             <div id="imagePreview" class="image-preview"></div>
+            <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" placeholder="https://image.tmdb.org/t/p/w1280/ejemplo.jpg"></div>
             <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" placeholder="https://www.youtube.com/embed/..."></div>
             <div class="form-group"><label>Año</label><input id="edit_year" placeholder="2024"></div>
             <div class="form-group"><label>Género</label><input id="edit_genre" placeholder="Acción, Drama..."></div>
             <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3" placeholder="Sinopsis..."></textarea></div>
         `;
+        
+        // Agregar buscador TMDB
+        const searchContainer = document.getElementById('tmdbSearchContainer');
+        const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
+        searchContainer.appendChild(searchUI);
+        
     } else if (type === 'music') {
         modalTitle.innerText = '🎵 Nueva Canción';
         modalFields.innerHTML = `
@@ -613,24 +933,44 @@ window.openEditModal = async (type, id) => {
             if (type === 'series') {
                 modalTitle.innerText = '📺 Editar Serie';
                 modalFields.innerHTML = `
+                    <div id="tmdbSearchContainer"></div>
                     <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
                     <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
                     <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
+                    <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" value="${escapeHtml(data.backdropUrl || '')}"></div>
                     <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
                     <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
                     <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
+                    <div id="seasonsContainer"></div>
                 `;
+                
+                // Agregar buscador TMDB
+                const searchContainer = document.getElementById('tmdbSearchContainer');
+                const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
+                searchContainer.appendChild(searchUI);
+                
+                // Renderizar temporadas existentes
+                renderSeasonsAndEpisodes(data.seasons || []);
+                
             } else if (type === 'movies') {
                 modalTitle.innerText = '🎬 Editar Película';
                 modalFields.innerHTML = `
+                    <div id="tmdbSearchContainer"></div>
                     <div class="form-group"><label>Título *</label><input id="edit_title" value="${escapeHtml(data.title || '')}"></div>
                     <div class="form-group"><label>URL Imagen (Poster)</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
                     <div id="imagePreview" class="image-preview" style="${data.imageUrl ? `background-image: url('${data.imageUrl}'); background-size: cover;` : ''}"></div>
+                    <div class="form-group"><label>URL Imagen de Fondo (Backdrop)</label><input id="edit_backdropUrl" value="${escapeHtml(data.backdropUrl || '')}"></div>
                     <div class="form-group"><label>URL Video</label><input id="edit_videoUrl" value="${escapeHtml(data.videoUrl || '')}"></div>
                     <div class="form-group"><label>Año</label><input id="edit_year" value="${escapeHtml(data.year || '')}"></div>
                     <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
                     <div class="form-group"><label>Sinopsis</label><textarea id="edit_overview" rows="3">${escapeHtml(data.overview || '')}</textarea></div>
                 `;
+                
+                // Agregar buscador TMDB
+                const searchContainer = document.getElementById('tmdbSearchContainer');
+                const searchUI = createSearchUI(type, (tmdbData) => fillFormWithTMDBData(type, tmdbData));
+                searchContainer.appendChild(searchUI);
+                
             } else {
                 openAddModal(type);
                 return;
@@ -669,12 +1009,15 @@ async function saveContent() {
         if (type === 'series') {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
             if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
             if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+            updateData.seasons = collectSeasonsFromForm();
         } else if (type === 'movies') {
             updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
             if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
             if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
             if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
             if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
