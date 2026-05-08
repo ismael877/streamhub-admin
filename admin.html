@@ -62,7 +62,6 @@
         .stat-card { background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; text-align: center; }
         .stat-card h2 { font-size: 2rem; color: #c084fc; }
         
-        /* Modal estilos */
         .modal {
             position: fixed;
             top: 0;
@@ -99,7 +98,6 @@
             background-color: #0f172a;
         }
         
-        /* Estilos para temporadas y episodios */
         .seasons-container {
             margin-top: 20px;
             border-top: 1px solid rgba(255,255,255,0.2);
@@ -190,6 +188,7 @@
             align-items: center;
         }
         .search-result-item:hover { background: #334155; }
+        .loading-text { text-align: center; padding: 20px; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -234,7 +233,7 @@
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"></table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
         </div>
 
         <!-- Películas -->
@@ -251,14 +250,17 @@
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <h2>📺 Series</h2>
                 <button id="addSerieBtn" class="success">➕ Agregar Serie</button>
+                <button id="refreshSeriesBtn" class="info" style="background:#3b82f6;">🔄 Refrescar</button>
             </div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
+            <div id="seriesTableContainer" style="overflow-x: auto;">
+                <div class="loading-text">Cargando series...</div>
+            </div>
         </div>
 
         <!-- Música -->
         <div id="musicSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
         </div>
 
         <!-- Radios -->
@@ -270,14 +272,14 @@
         <!-- Videos Musicales -->
         <div id="musicVideosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎤 Videos Musicales</h2><button id="addMusicVideoBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"></table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicVideosTable"></tbody></td></div>
         </div>
 
         <!-- Códigos -->
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos de invitación</h2>
             <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
-            <div style="overflow-x: auto;"></table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></tr></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
         </div>
     </div>
 </div>
@@ -441,150 +443,193 @@ async function isAdmin(email) {
 }
 
 async function loadStats() {
-    const users = await db.collection('users').get();
-    const hosts = await db.collection('users').where('isHost', '==', true).get();
-    const codes = await db.collection('codes').where('used', '==', false).get();
-    const movies = await db.collection('movies').get();
-    const series = await db.collection('series').get();
-    
-    document.getElementById('stats').innerHTML = `
-        <div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
-        <div class="stat-card"><h2>${hosts.size}</h2><p>Anfitriones</p></div>
-        <div class="stat-card"><h2>${codes.size}</h2><p>Códigos</p></div>
-        <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>
-    `;
-    
-    let recentHtml = '';
-    const recent = [];
-    users.forEach(doc => recent.push(doc.data().email));
-    recent.slice(-5).reverse().forEach(email => {
-        recentHtml += `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">📧 ${email}</div>`;
-    });
-    document.getElementById('recentUsers').innerHTML = recentHtml || 'No hay usuarios';
+    try {
+        const users = await db.collection('users').get();
+        const hosts = await db.collection('users').where('isHost', '==', true).get();
+        const codes = await db.collection('codes').where('used', '==', false).get();
+        const movies = await db.collection('movies').get();
+        const series = await db.collection('series').get();
+        
+        document.getElementById('stats').innerHTML = `
+            <div class="stat-card"><h2>${users.size}</h2><p>Usuarios</p></div>
+            <div class="stat-card"><h2>${hosts.size}</h2><p>Anfitriones</p></div>
+            <div class="stat-card"><h2>${codes.size}</h2><p>Códigos</p></div>
+            <div class="stat-card"><h2>${movies.size + series.size}</h2><p>Contenido</p></div>
+        `;
+        
+        let recentHtml = '';
+        const recent = [];
+        users.forEach(doc => recent.push(doc.data().email));
+        recent.slice(-5).reverse().forEach(email => {
+            recentHtml += `<div style="padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);">📧 ${email}</div>`;
+        });
+        document.getElementById('recentUsers').innerHTML = recentHtml || 'No hay usuarios';
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
 }
 
 async function loadUsers() {
-    const users = await db.collection('users').get();
-    let html = '';
-    users.forEach(doc => {
-        const u = doc.data();
-        html += `<tr>
-            <td>${u.email}</td>
-            <td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
-            <td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
-            <td>
-                <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
-                <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
+    try {
+        const users = await db.collection('users').get();
+        let html = '';
+        users.forEach(doc => {
+            const u = doc.data();
+            html += `<tr>
+                <td>${u.email}</td>
+                <td><span class="badge" style="background:${u.isHost ? '#8b5cf6' : '#3b82f6'}">${u.isHost ? 'Anfitrión' : 'Cliente'}</span></td>
+                <td><span class="badge ${u.active !== false ? 'badge-active' : 'badge-inactive'}">${u.active !== false ? 'Activo' : 'Suspendido'}</span></td>
+                <td>
+                    <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
+                    <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
+                </td>
+            </table>`;
+        });
+        document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
 }
 
 async function loadMovies() {
-    const snapshot = await db.collection('movies').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-            <td>${data.year || '—'}</td>
-            <td>
-                <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="5">No hay películas</td></tr>';
+    try {
+        const snapshot = await db.collection('movies').get();
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<tr>
+                <td>${data.title || '—'}</td>
+                <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+                <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
+                <td>${data.year || '—'}</td>
+                <td>
+                    <button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                    <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="5">No hay películas</td></tr>';
+    } catch (error) {
+        console.error('Error loading movies:', error);
+    }
 }
 
 async function loadSeries() {
-    const snapshot = await db.collection('series').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const seasonsCount = data.seasons ? data.seasons.length : 0;
-        let episodesCount = 0;
-        if (data.seasons) {
-            data.seasons.forEach(season => {
-                episodesCount += season.episodes ? season.episodes.length : 0;
-            });
+    try {
+        console.log('Cargando series desde Firebase...');
+        const snapshot = await db.collection('series').get();
+        console.log('Series encontradas:', snapshot.size);
+        
+        if (snapshot.size === 0) {
+            document.getElementById('seriesTableContainer').innerHTML = '<div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody><tr><td colspan="5">No hay series. Haz clic en "+ Agregar Serie" para crear una.</td></tr></tbody></table></div>';
+            return;
         }
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${seasonsCount} ${seasonsCount === 1 ? 'temporada' : 'temporadas'}</td>
-            <td>${episodesCount} episodios}</td>
-            <td>${data.year || '—'}</td>
-            <td>
-                <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b;">✏️</button>
-                <button onclick="deleteItem('series', '${doc.id}')" class="danger">🗑️</button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('seriesTable').innerHTML = html || '<tr><td colspan="5">No hay series</td></tr>';
+        
+        let html = '<div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody>';
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const seasonsCount = data.seasons ? data.seasons.length : 0;
+            let episodesCount = 0;
+            if (data.seasons) {
+                data.seasons.forEach(season => {
+                    episodesCount += season.episodes ? season.episodes.length : 0;
+                });
+            }
+            html += `<tr>
+                <td>${data.title || '—'}</td>
+                <td>${seasonsCount} ${seasonsCount === 1 ? 'temporada' : 'temporadas'}</td>
+                <td>${episodesCount} episodios</td>
+                <td>${data.year || '—'}</td>
+                <td>
+                    <button onclick="openEditModal('series', '${doc.id}')" style="background:#f59e0b; padding:5px 10px;">✏️</button>
+                    <button onclick="deleteItem('series', '${doc.id}')" class="danger" style="padding:5px 10px;">🗑️</button>
+                </td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('seriesTableContainer').innerHTML = html;
+    } catch (error) {
+        console.error('Error loading series:', error);
+        document.getElementById('seriesTableContainer').innerHTML = '<div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody><tr><td colspan="5">Error al cargar las series. Verifica tu conexión a Firebase.</td></tr></tbody></table></div>';
+    }
 }
 
 async function loadMusic() {
-    const snapshot = await db.collection('music').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.artist || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
-    });
-    document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
+    try {
+        const snapshot = await db.collection('music').get();
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<tr>
+                <td>${data.title || '—'}</td>
+                <td>${data.artist || '—'}</td>
+                <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+                <td>${data.audioUrl ? data.audioUrl.substring(0,30)+'...' : '—'}</td>
+                <td><button onclick="openEditModal('music', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('music', '${doc.id}')" class="danger">🗑️</button></td>
+            </tr>`;
+        });
+        document.getElementById('musicTable').innerHTML = html || '<tr><td colspan="5">No hay música</td></tr>';
+    } catch (error) {
+        console.error('Error loading music:', error);
+    }
 }
 
 async function loadRadios() {
-    const snapshot = await db.collection('radios').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        html += `<tr>
-            <td>${data.name || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
-    });
-    document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
+    try {
+        const snapshot = await db.collection('radios').get();
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<tr>
+                <td>${data.name || '—'}</td>
+                <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+                <td>${data.streamUrl ? data.streamUrl.substring(0,30)+'...' : '—'}</td>
+                <td><button onclick="openEditModal('radios', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('radios', '${doc.id}')" class="danger">🗑️</button></td>
+            </tr>`;
+        });
+        document.getElementById('radiosTable').innerHTML = html || '<tr><td colspan="4">No hay radios</td></tr>';
+    } catch (error) {
+        console.error('Error loading radios:', error);
+    }
 }
 
 async function loadMusicVideos() {
-    const snapshot = await db.collection('musicVideos').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        html += `<tr>
-            <td>${data.title || '—'}</td>
-            <td>${data.artist || '—'}</td>
-            <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
-            <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
-            <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
-    });
-    document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
+    try {
+        const snapshot = await db.collection('musicVideos').get();
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<tr>
+                <td>${data.title || '—'}</td>
+                <td>${data.artist || '—'}</td>
+                <td>${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
+                <td>${data.videoUrl ? data.videoUrl.substring(0,30)+'...' : '—'}</td>
+                <td><button onclick="openEditModal('musicVideos', '${doc.id}')" style="background:#f59e0b;">✏️</button><button onclick="deleteItem('musicVideos', '${doc.id}')" class="danger">🗑️</button></td>
+            </tr>`;
+        });
+        document.getElementById('musicVideosTable').innerHTML = html || '<tr><td colspan="5">No hay videos musicales</td></tr>';
+    } catch (error) {
+        console.error('Error loading music videos:', error);
+    }
 }
 
 async function loadCodes() {
-    const snapshot = await db.collection('codes').get();
-    let html = '';
-    snapshot.forEach(doc => {
-        const c = doc.data();
-        html += `<tr>
-            <td><code>${doc.id}</code></td>
-            <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
-            <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
-        </tr>`;
-    });
-    document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td><tr>';
+    try {
+        const snapshot = await db.collection('codes').get();
+        let html = '';
+        snapshot.forEach(doc => {
+            const c = doc.data();
+            html += `<tr>
+                <td><code>${doc.id}</code></td>
+                <td><span class="badge ${c.used ? 'badge-inactive' : 'badge-active'}">${c.used ? 'Usado' : 'Disponible'}</span></td>
+                <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
+            </td>`;
+        });
+        document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
+    } catch (error) {
+        console.error('Error loading codes:', error);
+    }
 }
 
 // ==================== GESTIÓN DE SERIES (TEMPORADAS Y EPISODIOS) ====================
@@ -630,24 +675,24 @@ function renderSeasonsAndEpisodes(seasons = []) {
         `;
         
         const episodes = season.episodes || [];
-        episodes.forEach((ep, epIdx) => {
-            html += `
-                <div class="episode-item" data-episode-index="${epIdx}">
-                    <div class="episode-header">
-                        <span><strong>Episodio ${ep.number}</strong>: ${escapeHtml(ep.title)}</span>
-                        <button type="button" class="danger btn-icon" onclick="removeEpisode(${seasonIdx}, ${epIdx})">✕ Eliminar</button>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
-                        <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
-                    </div>
-                    <div class="form-group"><label>URL del Video</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/... o URL directa"></div>
-                </div>
-            `;
-        });
-        
         if (episodes.length === 0) {
             html += `<div style="padding: 10px; text-align: center; color: #94a3b8;">No hay episodios en esta temporada</div>`;
+        } else {
+            episodes.forEach((ep, epIdx) => {
+                html += `
+                    <div class="episode-item" data-episode-index="${epIdx}">
+                        <div class="episode-header">
+                            <span><strong>Episodio ${ep.number}</strong>: ${escapeHtml(ep.title)}</span>
+                            <button type="button" class="danger btn-icon" onclick="removeEpisode(${seasonIdx}, ${epIdx})">✕ Eliminar</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
+                            <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
+                        </div>
+                        <div class="form-group"><label>URL del Video</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/... o URL directa"></div>
+                    </div>
+                `;
+            });
         }
         
         html += `
@@ -730,11 +775,18 @@ function collectSeasonsFromForm() {
 // ==================== MODAL DE EDICIÓN ====================
 window.openEditModal = async (type, id) => {
     if (isGuest) { alert('Modo invitado'); return; }
-    const doc = await db.collection(type).doc(id).get();
-    if (doc.exists) {
-        currentEditType = type;
-        currentEditId = id;
-        showFormModal(type, doc.data());
+    try {
+        const doc = await db.collection(type).doc(id).get();
+        if (doc.exists) {
+            currentEditType = type;
+            currentEditId = id;
+            showFormModal(type, doc.data());
+        } else {
+            alert('El documento no existe');
+        }
+    } catch (error) {
+        console.error('Error abriendo modal:', error);
+        alert('Error al cargar el contenido');
     }
 };
 
@@ -846,50 +898,55 @@ async function saveContent() {
     if (!currentEditType) return;
     if (isGuest) { alert('Modo invitado'); closeModal(); return; }
     
-    const type = currentEditType;
-    const id = currentEditId || db.collection(type).doc().id;
-    const updateData = { updatedAt: new Date() };
-    
-    if (type === 'movies') {
-        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
-        if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-        if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-    } else if (type === 'series') {
-        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
-        if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
-        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-        if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
-        updateData.seasons = collectSeasonsFromForm();
-    } else if (type === 'music') {
-        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
-    } else if (type === 'radios') {
-        updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
-        if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
-        if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
-    } else if (type === 'musicVideos') {
-        updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
-        if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
-        if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
-        if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+    try {
+        const type = currentEditType;
+        const id = currentEditId || db.collection(type).doc().id;
+        const updateData = { updatedAt: new Date() };
+        
+        if (type === 'movies') {
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
+            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+        } else if (type === 'series') {
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_backdropUrl')?.value) updateData.backdropUrl = document.getElementById('edit_backdropUrl').value;
+            if (document.getElementById('edit_year')?.value) updateData.year = document.getElementById('edit_year').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+            if (document.getElementById('edit_overview')?.value) updateData.overview = document.getElementById('edit_overview').value;
+            updateData.seasons = collectSeasonsFromForm();
+        } else if (type === 'music') {
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_audioUrl')?.value) updateData.audioUrl = document.getElementById('edit_audioUrl').value;
+        } else if (type === 'radios') {
+            updateData.name = document.getElementById('edit_name')?.value || 'Sin nombre';
+            if (document.getElementById('edit_streamUrl')?.value) updateData.streamUrl = document.getElementById('edit_streamUrl').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_country')?.value) updateData.country = document.getElementById('edit_country').value;
+            if (document.getElementById('edit_genre')?.value) updateData.genre = document.getElementById('edit_genre').value;
+        } else if (type === 'musicVideos') {
+            updateData.title = document.getElementById('edit_title')?.value || 'Sin título';
+            if (document.getElementById('edit_artist')?.value) updateData.artist = document.getElementById('edit_artist').value;
+            if (document.getElementById('edit_imageUrl')?.value) updateData.imageUrl = document.getElementById('edit_imageUrl').value;
+            if (document.getElementById('edit_videoUrl')?.value) updateData.videoUrl = document.getElementById('edit_videoUrl').value;
+        }
+        
+        if (!currentEditId) updateData.createdAt = new Date();
+        
+        await db.collection(type).doc(id).set(updateData, { merge: true });
+        alert('✅ Guardado correctamente');
+        closeModal();
+        await refreshCurrentSection();
+    } catch (error) {
+        console.error('Error guardando:', error);
+        alert('Error al guardar: ' + error.message);
     }
-    
-    if (!currentEditId) updateData.createdAt = new Date();
-    
-    await db.collection(type).doc(id).set(updateData, { merge: true });
-    alert('✅ Guardado correctamente');
-    closeModal();
-    refreshCurrentSection();
 }
 
 function closeModal() {
@@ -906,44 +963,64 @@ function escapeHtml(text) {
 // ==================== ACCIONES ====================
 window.toggleUserStatus = async (uid, isActive) => {
     if (isGuest) { alert('Modo invitado'); return; }
-    await db.collection('users').doc(uid).update({ active: !isActive });
-    loadUsers(); loadStats();
+    try {
+        await db.collection('users').doc(uid).update({ active: !isActive });
+        await loadUsers();
+        await loadStats();
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 window.toggleUserHost = async (uid, isHost) => {
     if (isGuest) { alert('Modo invitado'); return; }
-    await db.collection('users').doc(uid).update({ isHost: !isHost });
-    loadUsers(); loadStats();
+    try {
+        await db.collection('users').doc(uid).update({ isHost: !isHost });
+        await loadUsers();
+        await loadStats();
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 window.deleteItem = async (type, id) => {
     if (isGuest) { alert('Modo invitado'); return; }
     if (confirm('¿Eliminar permanentemente este contenido?')) {
-        await db.collection(type).doc(id).delete();
-        refreshCurrentSection();
+        try {
+            await db.collection(type).doc(id).delete();
+            await refreshCurrentSection();
+        } catch (error) {
+            console.error(error);
+            alert('Error al eliminar');
+        }
     }
 };
 
 window.deleteCode = async (codeId) => {
     if (isGuest) { alert('Modo invitado'); return; }
     if (confirm('¿Eliminar este código?')) {
-        await db.collection('codes').doc(codeId).delete();
-        loadCodes(); loadStats();
+        try {
+            await db.collection('codes').doc(codeId).delete();
+            await loadCodes();
+            await loadStats();
+        } catch (error) {
+            console.error(error);
+        }
     }
 };
 
-function refreshCurrentSection() {
-    if (currentSection === 'users') loadUsers();
-    else if (currentSection === 'movies') loadMovies();
-    else if (currentSection === 'series') loadSeries();
-    else if (currentSection === 'music') loadMusic();
-    else if (currentSection === 'radios') loadRadios();
-    else if (currentSection === 'musicVideos') loadMusicVideos();
-    else if (currentSection === 'codes') loadCodes();
-    else if (currentSection === 'dashboard') loadStats();
+async function refreshCurrentSection() {
+    if (currentSection === 'users') await loadUsers();
+    else if (currentSection === 'movies') await loadMovies();
+    else if (currentSection === 'series') await loadSeries();
+    else if (currentSection === 'music') await loadMusic();
+    else if (currentSection === 'radios') await loadRadios();
+    else if (currentSection === 'musicVideos') await loadMusicVideos();
+    else if (currentSection === 'codes') await loadCodes();
+    else if (currentSection === 'dashboard') await loadStats();
 }
 
-window.showSection = (section) => {
+window.showSection = async (section) => {
     currentSection = section;
     document.querySelectorAll('#adminPanel .card').forEach(c => c.classList.add('hidden'));
     const sections = {
@@ -957,15 +1034,20 @@ window.showSection = (section) => {
         'codes': 'codesSection'
     };
     document.getElementById(sections[section]).classList.remove('hidden');
-    refreshCurrentSection();
+    await refreshCurrentSection();
 };
 
 async function generateNewCode() {
     if (isGuest) { alert('Modo invitado'); return; }
-    const codeId = 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    await db.collection('codes').doc(codeId).set({ ownerId: 'admin', used: false, createdAt: new Date() });
-    alert(`✅ Código generado: ${codeId}`);
-    loadCodes(); loadStats();
+    try {
+        const codeId = 'INV_' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        await db.collection('codes').doc(codeId).set({ ownerId: 'admin', used: false, createdAt: new Date() });
+        alert(`✅ Código generado: ${codeId}`);
+        await loadCodes();
+        await loadStats();
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 // ==================== EVENT LISTENERS ====================
@@ -980,7 +1062,8 @@ document.getElementById('loginBtn').onclick = async () => {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
             document.getElementById('userEmail').innerText = email;
-            loadStats();
+            await loadStats();
+            await loadSeries();
         } else {
             document.getElementById('loginError').style.display = 'block';
             document.getElementById('loginError').innerText = 'No eres administrador';
@@ -992,12 +1075,13 @@ document.getElementById('loginBtn').onclick = async () => {
     }
 };
 
-document.getElementById('guestBtn').onclick = () => {
+document.getElementById('guestBtn').onclick = async () => {
     isGuest = true;
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
     document.getElementById('userEmail').innerText = 'Invitado (solo lectura)';
-    loadStats();
+    await loadStats();
+    await loadSeries();
 };
 
 document.getElementById('logoutBtn').onclick = async () => {
@@ -1006,6 +1090,7 @@ document.getElementById('logoutBtn').onclick = async () => {
 };
 
 document.getElementById('refreshUsers').onclick = loadUsers;
+document.getElementById('refreshSeriesBtn').onclick = () => { loadSeries(); };
 document.getElementById('addMovieBtn').onclick = () => openAddModal('movies');
 document.getElementById('addSerieBtn').onclick = () => openAddModal('series');
 document.getElementById('addMusicBtn').onclick = () => openAddModal('music');
