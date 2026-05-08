@@ -49,6 +49,7 @@
         button.success { background: linear-gradient(90deg, #10b981, #059669); }
         button.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
         button.info { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        button.secondary { background: linear-gradient(90deg, #475569, #334155); }
         .hidden { display: none; }
         .nav-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
@@ -104,11 +105,18 @@
             border-top: 1px solid rgba(255,255,255,0.2);
             padding-top: 20px;
         }
+        .seasons-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #c084fc;
+        }
         .season-card {
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.4);
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .season-header {
             display: flex;
@@ -117,14 +125,27 @@
             margin-bottom: 15px;
             flex-wrap: wrap;
             gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .season-title {
-            font-size: 1.2rem;
+        .season-number-title {
+            font-size: 1.1rem;
             font-weight: bold;
             color: #c084fc;
         }
+        .season-buttons {
+            display: flex;
+            gap: 10px;
+        }
         .episodes-list {
             margin-left: 20px;
+            margin-top: 15px;
+        }
+        .episodes-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #94a3b8;
         }
         .episode-item {
             background: rgba(255,255,255,0.05);
@@ -141,8 +162,17 @@
             gap: 10px;
         }
         .btn-icon {
-            padding: 5px 12px;
-            font-size: 0.8rem;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        .add-episode-btn {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .add-season-btn {
+            margin-top: 15px;
+            width: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
         }
         .search-results {
             background: #0f172a;
@@ -204,7 +234,7 @@
         <div id="usersSection" class="card hidden">
             <h2>👥 Usuarios</h2>
             <button id="refreshUsers" class="success" style="margin-bottom: 15px;">🔄 Refrescar</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+            <div style="overflow-x: auto;"></table><thead><tr><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="usersTable"></tbody></table></div>
         </div>
 
         <!-- Películas -->
@@ -222,19 +252,19 @@
                 <h2>📺 Series</h2>
                 <button id="addSerieBtn" class="success">➕ Agregar Serie</button>
             </div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></tr></div>
+            <div style="overflow-x: auto;"><tr><thead><tr><th>Título</th><th>Temporadas</th><th>Episodios</th><th>Año</th><th>Acciones</th></tr></thead><tbody id="seriesTable"></tbody></table></div>
         </div>
 
         <!-- Música -->
         <div id="musicSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>🎵 Música</h2><button id="addMusicBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></table></thead><tbody id="musicTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Título</th><th>Artista</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="musicTable"></tbody></table></div>
         </div>
 
         <!-- Radios -->
         <div id="radiosSection" class="card hidden">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;"><h2>📻 Radios</h2><button id="addRadioBtn" class="success">➕ Agregar</button></div>
-            <div style="overflow-x: auto;"><tr><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
+            <div style="overflow-x: auto;"><table><thead><tr><th>Nombre</th><th>Imagen</th><th>URL</th><th>Acciones</th></tr></thead><tbody id="radiosTable"></tbody></table></div>
         </div>
 
         <!-- Videos Musicales -->
@@ -247,7 +277,7 @@
         <div id="codesSection" class="card hidden">
             <h2>🔑 Códigos de invitación</h2>
             <button id="generateCode" class="success" style="margin-bottom: 15px;">✨ Generar nuevo código</button>
-            <div style="overflow-x: auto;"><table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></table></div>
+            <div style="overflow-x: auto;"></table><thead><tr><th>Código</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="codesTable"></tbody></tr></div>
         </div>
     </div>
 </div>
@@ -446,7 +476,7 @@ async function loadUsers() {
                 <button onclick="toggleUserStatus('${doc.id}', ${u.active !== false})">${u.active !== false ? 'Suspender' : 'Activar'}</button>
                 <button onclick="toggleUserHost('${doc.id}', ${u.isHost || false})" style="background:#ff9800;">${u.isHost ? 'Quitar Host' : 'Hacer Host'}</button>
             </td>
-        </table>`;
+        </tr>`;
     });
     document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="4">No hay usuarios</td></tr>';
 }
@@ -467,7 +497,7 @@ async function loadMovies() {
             </td>
         </tr>`;
     });
-    document.getElementById('moviesTable').innerHTML = html || '<td><td colspan="5">No hay películas</td></tr>';
+    document.getElementById('moviesTable').innerHTML = html || '<tr><td colspan="5">No hay películas</td></tr>';
 }
 
 async function loadSeries() {
@@ -554,7 +584,7 @@ async function loadCodes() {
             <td><button onclick="deleteCode('${doc.id}')" class="danger">🗑️</button></td>
         </tr>`;
     });
-    document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td></tr>';
+    document.getElementById('codesTable').innerHTML = html || '<tr><td colspan="3">No hay códigos</td><tr>';
 }
 
 // ==================== GESTIÓN DE SERIES (TEMPORADAS Y EPISODIOS) ====================
@@ -562,27 +592,45 @@ function renderSeasonsAndEpisodes(seasons = []) {
     const container = document.getElementById('seasonsContainer');
     if (!container) return;
     
-    let html = '<div class="seasons-container"><h3 style="margin-bottom:15px;">📺 Temporadas y Episodios</h3>';
+    if (!seasons || seasons.length === 0) {
+        container.innerHTML = `
+            <div class="seasons-container">
+                <div class="seasons-title">📺 Temporadas y Episodios</div>
+                <div style="text-align: center; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 16px;">
+                    <p>No hay temporadas creadas.</p>
+                    <button type="button" id="addSeasonMainBtn" class="add-season-btn" style="margin-top: 15px;">+ Agregar Primera Temporada</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('addSeasonMainBtn')?.addEventListener('click', () => addSeason());
+        return;
+    }
+    
+    let html = `
+        <div class="seasons-container">
+            <div class="seasons-title">📺 Temporadas y Episodios</div>
+    `;
     
     seasons.forEach((season, seasonIdx) => {
         html += `
             <div class="season-card" data-season-index="${seasonIdx}">
                 <div class="season-header">
-                    <div class="season-title">Temporada ${season.number}</div>
-                    <div>
+                    <div class="season-number-title">Temporada ${season.number}</div>
+                    <div class="season-buttons">
                         <button type="button" class="info btn-icon" onclick="addEpisode(${seasonIdx})">+ Episodio</button>
                         <button type="button" class="danger btn-icon" onclick="removeSeason(${seasonIdx})">🗑️ Eliminar Temporada</button>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Número de Temporada</label><input type="number" class="season-number" value="${season.number}" placeholder="1"></div>
-                    <div class="form-group"><label>Título de Temporada</label><input type="text" class="season-title-input" value="${escapeHtml(season.title || '')}" placeholder="Título opcional"></div>
+                    <div class="form-group"><label>Título de Temporada (opcional)</label><input type="text" class="season-title-input" value="${escapeHtml(season.title || '')}" placeholder="Ej: Parte 1"></div>
                 </div>
                 <div class="episodes-list">
-                    <h4 style="margin:10px 0;">Episodios</h4>
+                    <div class="episodes-title">📋 Episodios</div>
         `;
         
-        (season.episodes || []).forEach((ep, epIdx) => {
+        const episodes = season.episodes || [];
+        episodes.forEach((ep, epIdx) => {
             html += `
                 <div class="episode-item" data-episode-index="${epIdx}">
                     <div class="episode-header">
@@ -593,19 +641,23 @@ function renderSeasonsAndEpisodes(seasons = []) {
                         <div class="form-group"><label>Número</label><input type="number" class="episode-number" value="${ep.number}" placeholder="1"></div>
                         <div class="form-group"><label>Título</label><input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" placeholder="Título del episodio"></div>
                     </div>
-                    <div class="form-group"><label>URL del Video (YouTube embed o directo)</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/..."></div>
+                    <div class="form-group"><label>URL del Video</label><input type="text" class="episode-url" value="${escapeHtml(ep.videoUrl || '')}" placeholder="https://www.youtube.com/embed/... o URL directa"></div>
                 </div>
             `;
         });
         
+        if (episodes.length === 0) {
+            html += `<div style="padding: 10px; text-align: center; color: #94a3b8;">No hay episodios en esta temporada</div>`;
+        }
+        
         html += `
-                    <button type="button" class="info btn-icon" style="margin-top:10px;" onclick="addEpisode(${seasonIdx})">+ Agregar Episodio</button>
+                    <button type="button" class="info btn-icon add-episode-btn" onclick="addEpisode(${seasonIdx})">+ Agregar Episodio a esta Temporada</button>
                 </div>
             </div>
         `;
     });
     
-    html += '<button type="button" id="addSeasonBtn" class="success" style="margin-top:15px; width:100%;">+ Agregar Temporada</button></div>';
+    html += `<button type="button" id="addSeasonBtn" class="add-season-btn">+ Agregar Nueva Temporada</button></div>`;
     container.innerHTML = html;
     
     document.getElementById('addSeasonBtn')?.addEventListener('click', () => addSeason());
@@ -635,7 +687,7 @@ function addEpisode(seasonIdx) {
 }
 
 function removeSeason(seasonIdx) {
-    if (confirm('¿Eliminar esta temporada y todos sus episodios?')) {
+    if (confirm('¿Eliminar esta temporada y TODOS sus episodios? Esta acción no se puede deshacer.')) {
         const seasons = collectSeasonsFromForm();
         seasons.splice(seasonIdx, 1);
         seasons.forEach((s, idx) => s.number = idx + 1);
@@ -746,8 +798,10 @@ function showFormModal(type, data) {
             <div class="form-group"><label>URL Stream</label><input id="edit_streamUrl" value="${escapeHtml(data.streamUrl || '')}"></div>
             <div class="form-group"><label>URL Imagen</label><input id="edit_imageUrl" value="${escapeHtml(data.imageUrl || '')}"></div>
             <div id="imagePreview" class="image-preview"></div>
-            <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}"></div>
-            <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
+            <div class="form-row">
+                <div class="form-group"><label>País</label><input id="edit_country" value="${escapeHtml(data.country || '')}"></div>
+                <div class="form-group"><label>Género</label><input id="edit_genre" value="${escapeHtml(data.genre || '')}"></div>
+            </div>
         `;
     } else if (type === 'musicVideos') {
         modalTitle.innerText = '🎤 ' + (currentEditId ? 'Editar Video Musical' : 'Nuevo Video Musical');
