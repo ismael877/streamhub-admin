@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamHub Admin - Importación Robusta</title>
+    <title>StreamHub Admin - Gestión Completa</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -80,8 +80,8 @@
             background: #1e293b;
             border-radius: 24px;
             padding: 30px;
-            max-width: 900px;
-            width: 90%;
+            max-width: 1000px;
+            width: 95%;
             max-height: 85vh;
             overflow-y: auto;
         }
@@ -123,20 +123,66 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255,255,255,0.1);
         }
+        .season-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
         .episodes-list { margin-left: 20px; margin-top: 15px; }
         .episode-item {
             background: rgba(255,255,255,0.05);
             border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .episode-row {
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            margin-bottom: 10px;
         }
-        .episode-number { font-weight: bold; color: #c084fc; min-width: 50px; }
-        .btn-small { padding: 5px 10px; font-size: 12px; }
+        .episode-number { font-weight: bold; color: #c084fc; min-width: 60px; }
+        .episode-title-input { 
+            background: transparent; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            padding: 8px 12px; 
+            border-radius: 20px; 
+            font-size: 13px;
+            flex: 1;
+            min-width: 150px;
+            margin: 0;
+        }
+        .episode-number-input {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            width: 80px;
+            margin: 0;
+        }
+        .episode-url-input {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-family: monospace;
+            flex: 2;
+            min-width: 250px;
+            margin: 0;
+        }
+        .episode-title-input:focus, .episode-number-input:focus, .episode-url-input:focus {
+            outline: none;
+            border-color: #f59e0b;
+        }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
         .vimeus-badge {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 4px 12px;
@@ -220,6 +266,16 @@
             padding: 15px;
             margin-top: 15px;
         }
+        .season-title-input {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            width: auto;
+            min-width: 200px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -235,7 +291,7 @@
 
     <div id="adminPanel" class="hidden">
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Importación Robusta</span></h1>
+            <h1>🎬 StreamHub Admin <span class="vimeus-badge">Gestión Completa</span></h1>
             <div><span id="userEmail"></span> <button id="logoutBtn" class="danger">Salir</button></div>
         </div>
 
@@ -308,11 +364,11 @@
 
 <div id="importModal" class="modal">
     <div class="modal-content">
-        <h3>🤖 Importación Automática de Series/Animes</h3>
+        <h3>🤖 Importación Automática</h3>
         <div class="form-group">
             <label>🔍 Buscar en TMDB</label>
             <div class="search-box">
-                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Attack on Titan, Naruto..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
+                <input type="text" id="searchSerieInput" placeholder="Ej: Game of Thrones, Attack on Titan..." onkeypress="if(event.key==='Enter') searchSeriesAndShow()">
                 <button id="searchSerieBtn" class="info">Buscar</button>
             </div>
         </div>
@@ -338,7 +394,7 @@
                 <input type="number" id="manualTmdbId" placeholder="TMDB ID (ej: 1399)" style="flex: 1; margin-bottom: 0;">
                 <button id="manualImportBtn" class="warning">Importar Manualmente</button>
             </div>
-            <p style="font-size: 11px; color: #667eea; margin-top: 8px;">Ejemplos: Game of Thrones=1399, Attack on Titan=46261, Naruto=31933</p>
+            <p style="font-size: 11px; color: #667eea; margin-top: 8px;">Ejemplos: Game of Thrones=1399, Attack on Titan=46261</p>
         </div>
         
         <div class="modal-buttons" style="margin-top: 20px;">
@@ -348,7 +404,7 @@
 </div>
 
 <div id="seriesDetailModal" class="modal">
-    <div class="modal-content" style="max-width: 950px;">
+    <div class="modal-content" style="max-width: 1100px;">
         <div id="seriesDetailContent"></div>
     </div>
 </div>
@@ -506,7 +562,7 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
     
     for (let s = 1; s <= totalSeasons; s++) {
         progressStatus.innerText = `Obteniendo episodios de temporada ${s} de ${totalSeasons}...`;
-        progressBar.value = 20 + Math.floor((s / totalSeasons) * 70);
+        progressBar.value = 20 + Math.floor((s / totalSeasons) * 60);
         addDebugLog(`📖 Procesando temporada ${s}...`);
         
         const tmdbEpisodes = await getTMDBSeasonEpisodes(tmdbId, s);
@@ -543,7 +599,7 @@ async function importSerieCompleta(tmdbId, titulo, posterPath, backdropPath, ove
         await new Promise(r => setTimeout(r, 200));
     }
     
-    progressBar.value = 90;
+    progressBar.value = 85;
     progressStatus.innerText = `Guardando en Firebase...`;
     addDebugLog(`💾 Guardando ${seasonsData.reduce((a,s)=> a + s.episodes.length,0)} episodios en Firebase...`);
     
@@ -697,7 +753,7 @@ async function loadMovies() {
             html += `<tr><td style="padding:12px;">${escapeHtml(data.title)}</td>
                     <td style="padding:12px;">${data.imageUrl ? `<img src="${data.imageUrl}" style="width:40px;height:60px;object-fit:cover;border-radius:8px;">` : '—'}</td>
                     <td style="padding:12px; max-width:300px;"><input type="text" class="url-edit" value="${escapeHtml(data.videoUrl || '')}" onchange="updateMovieUrl('${doc.id}', this.value)"></td>
-                    <td style="padding:12px;"><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️</button>
+                    <td style="padding:12px;"><button onclick="openEditModal('movies', '${doc.id}')" style="background:#f59e0b;">✏️ Editar</button>
                     <button onclick="deleteItem('movies', '${doc.id}')" class="danger">🗑️</button></td>
                 </tr>`;
         });
@@ -806,7 +862,7 @@ async function loadCodes() {
     } catch (error) { console.error(error); }
 }
 
-// ==================== GESTIÓN DE SERIES ====================
+// ==================== GESTIÓN DE EPISODIOS (COMPLETA) ====================
 window.viewSeriesDetails = async (docId) => {
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
@@ -815,7 +871,10 @@ window.viewSeriesDetails = async (docId) => {
     let html = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h2>${esAnime ? '🎌' : '📺'} ${escapeHtml(data.title)} <span class="type-badge ${esAnime ? 'type-anime' : 'type-serie'}">${esAnime ? 'Anime' : 'Serie'}</span></h2>
-            <button onclick="closeSeriesDetail()" style="background:#ef4444;">✕ Cerrar</button>
+            <div>
+                <button onclick="addNewSeason('${docId}')" class="success btn-small" style="margin-right:10px;">➕ Nueva Temporada</button>
+                <button onclick="closeSeriesDetail()" style="background:#ef4444;">✕ Cerrar</button>
+            </div>
         </div>
         <div style="display:flex;gap:20px;margin-bottom:20px;flex-wrap:wrap;">
             ${data.imageUrl ? `<img src="${data.imageUrl}" style="width:150px;border-radius:12px;">` : ''}
@@ -828,41 +887,55 @@ window.viewSeriesDetails = async (docId) => {
             </div>
         </div>
         <div class="seasons-container">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-                <h3>📋 Temporadas y Episodios</h3>
-                <button onclick="addNewSeason('${docId}')" class="success btn-small">➕ Nueva Temporada</button>
-            </div>
+            <h3>📋 Temporadas y Episodios</h3>
     `;
     
     for (let sIdx = 0; sIdx < (data.seasons || []).length; sIdx++) {
         const season = data.seasons[sIdx];
         html += `
             <div class="season-card">
-                <div class="season-header" style="display:flex;justify-content:space-between;margin-bottom:10px;">
-                    <strong>Temporada ${season.number}: ${escapeHtml(season.title)}</strong>
+                <div class="season-header">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span style="font-weight:bold;">🎬 Temporada ${season.number}:</span>
+                        <input type="text" class="season-title-input" value="${escapeHtml(season.title)}" 
+                               id="season_title_${sIdx}" placeholder="Título de temporada">
+                        <button onclick="updateSeasonTitle('${docId}', ${sIdx}, document.getElementById('season_title_${sIdx}').value)" class="warning btn-small">💾 Guardar</button>
+                    </div>
                     <div>
-                        <button onclick="addEpisodeToSeason('${docId}', ${sIdx})" class="info btn-small">➕ Episodio</button>
-                        <button onclick="deleteSeason('${docId}', ${sIdx})" class="danger btn-small">🗑️</button>
+                        <button onclick="addEpisodeToSeason('${docId}', ${sIdx})" class="info btn-small" style="margin-right:5px;">➕ Episodio</button>
+                        <button onclick="deleteSeason('${docId}', ${sIdx})" class="danger btn-small">🗑️ Eliminar Temporada</button>
                     </div>
                 </div>
                 <div class="episodes-list">
         `;
         
         if (!season.episodes || season.episodes.length === 0) {
-            html += `<p style="color:#94a3b8;">Sin episodios</p>`;
+            html += `<p style="color:#94a3b8; margin-left:20px;">No hay episodios. Haz clic en "+ Episodio" para agregar.</p>`;
         } else {
             for (let eIdx = 0; eIdx < season.episodes.length; eIdx++) {
                 const ep = season.episodes[eIdx];
                 html += `
                     <div class="episode-item">
-                        <span class="episode-number">Ep ${ep.number}:</span>
-                        <span>${escapeHtml(ep.title)}</span>
-                        <div style="flex:1;">
-                            <input type="text" class="url-edit" value="${escapeHtml(ep.videoUrl || '')}" onchange="updateEpisodeUrl('${docId}', ${sIdx}, ${eIdx}, this.value)" style="font-size:10px;">
-                        </div>
-                        <div>
-                            <button onclick="window.open('${ep.videoUrl}', '_blank')" class="info btn-small">▶️</button>
+                        <div class="episode-row">
+                            <span class="episode-number">Episodio:</span>
+                            <input type="number" class="episode-number-input" value="${ep.number}" 
+                                   id="ep_num_${sIdx}_${eIdx}" placeholder="#">
+                            <input type="text" class="episode-title-input" value="${escapeHtml(ep.title)}" 
+                                   id="ep_title_${sIdx}_${eIdx}" placeholder="Título">
+                            <button onclick="updateEpisode('${docId}', ${sIdx}, ${eIdx}, 
+                                document.getElementById('ep_title_${sIdx}_${eIdx}').value,
+                                document.getElementById('ep_num_${sIdx}_${eIdx}').value)" 
+                                class="warning btn-small">💾 Guardar</button>
+                            <button onclick="window.open('${ep.videoUrl}', '_blank')" class="info btn-small">▶️ Ver</button>
                             <button onclick="deleteEpisode('${docId}', ${sIdx}, ${eIdx})" class="danger btn-small">🗑️</button>
+                        </div>
+                        <div class="episode-row">
+                            <span class="episode-number">URL:</span>
+                            <input type="text" class="episode-url-input" value="${escapeHtml(ep.videoUrl || '')}" 
+                                   id="ep_url_${sIdx}_${eIdx}" placeholder="https://vimeus.com/e/serie?tmdb=...">
+                            <button onclick="updateEpisodeUrl('${docId}', ${sIdx}, ${eIdx}, 
+                                document.getElementById('ep_url_${sIdx}_${eIdx}').value)" 
+                                class="info btn-small">Actualizar URL</button>
                         </div>
                     </div>
                 `;
@@ -882,33 +955,51 @@ window.closeSeriesDetail = () => {
     document.getElementById('seriesDetailModal').style.display = 'none';
 };
 
-window.updateEpisodeUrl = async (docId, seasonIdx, episodeIdx, newUrl) => {
+// Actualizar título de temporada
+window.updateSeasonTitle = async (docId, seasonIdx, newTitle) => {
     if (isGuest) { showToast('Modo invitado', true); return; }
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    if (seasons[seasonIdx] && seasons[seasonIdx].episodes[episodeIdx]) {
-        seasons[seasonIdx].episodes[episodeIdx].videoUrl = newUrl;
-        const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-        await db.collection('series').doc(docId).update({ seasons: seasons, totalEpisodes: totalEpisodes, updatedAt: new Date() });
-        showToast('✅ URL actualizada');
+    if (seasons[seasonIdx]) {
+        seasons[seasonIdx].title = newTitle;
+        await db.collection('series').doc(docId).update({ seasons: seasons, updatedAt: new Date() });
+        showToast('✅ Título de temporada actualizado');
         viewSeriesDetails(docId);
     }
 };
 
+// Agregar nueva temporada
 window.addNewSeason = async (docId) => {
+    if (isGuest) { showToast('Modo invitado', true); return; }
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
     const newSeasonNum = seasons.length + 1;
     seasons.push({ number: newSeasonNum, title: `Temporada ${newSeasonNum}`, episodes: [] });
-    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-    await db.collection('series').doc(docId).update({ seasons: seasons, totalSeasons: seasons.length, totalEpisodes: totalEpisodes, updatedAt: new Date() });
+    await db.collection('series').doc(docId).update({ seasons: seasons, totalSeasons: seasons.length, updatedAt: new Date() });
     showToast(`✅ Temporada ${newSeasonNum} agregada`);
     viewSeriesDetails(docId);
 };
 
+// Eliminar temporada
+window.deleteSeason = async (docId, seasonIdx) => {
+    if (isGuest) { showToast('Modo invitado', true); return; }
+    if (!confirm('¿Eliminar esta temporada y todos sus episodios?')) return;
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    seasons.splice(seasonIdx, 1);
+    seasons.forEach((s, idx) => s.number = idx + 1);
+    const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+    await db.collection('series').doc(docId).update({ seasons: seasons, totalSeasons: seasons.length, totalEpisodes: totalEpisodes, updatedAt: new Date() });
+    showToast('✅ Temporada eliminada');
+    viewSeriesDetails(docId);
+};
+
+// Agregar episodio a temporada
 window.addEpisodeToSeason = async (docId, seasonIdx) => {
+    if (isGuest) { showToast('Modo invitado', true); return; }
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
@@ -925,25 +1016,61 @@ window.addEpisodeToSeason = async (docId, seasonIdx) => {
     viewSeriesDetails(docId);
 };
 
-window.deleteSeason = async (docId, seasonIdx) => {
-    if (!confirm('¿Eliminar esta temporada y todos sus episodios?')) return;
+// Actualizar episodio (título y número)
+window.updateEpisode = async (docId, seasonIdx, episodeIdx, newTitle, newNumber) => {
+    if (isGuest) { showToast('Modo invitado', true); return; }
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
-    seasons.splice(seasonIdx, 1);
-    seasons.forEach((s, idx) => s.number = idx + 1);
+    if (!seasons[seasonIdx] || !seasons[seasonIdx].episodes[episodeIdx]) return;
+    
+    const episode = seasons[seasonIdx].episodes[episodeIdx];
+    const oldNumber = episode.number;
+    const newNum = parseInt(newNumber);
+    
+    episode.title = newTitle;
+    
+    if (newNum !== oldNumber && !isNaN(newNum) && newNum > 0) {
+        const exists = seasons[seasonIdx].episodes.some(e => e.number === newNum && e !== episode);
+        if (exists) {
+            showToast('Ya existe un episodio con ese número', true);
+            viewSeriesDetails(docId);
+            return;
+        }
+        episode.number = newNum;
+        episode.videoUrl = getVimeusUrl(data.tmdbId, data.isAnime, seasons[seasonIdx].number, newNum);
+        seasons[seasonIdx].episodes.sort((a, b) => a.number - b.number);
+    }
+    
     const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-    await db.collection('series').doc(docId).update({ seasons: seasons, totalSeasons: seasons.length, totalEpisodes: totalEpisodes, updatedAt: new Date() });
-    showToast('✅ Temporada eliminada');
+    await db.collection('series').doc(docId).update({ seasons: seasons, totalEpisodes: totalEpisodes, updatedAt: new Date() });
+    showToast(`✅ Episodio actualizado`);
     viewSeriesDetails(docId);
 };
 
+// Actualizar URL de episodio
+window.updateEpisodeUrl = async (docId, seasonIdx, episodeIdx, newUrl) => {
+    if (isGuest) { showToast('Modo invitado', true); return; }
+    const doc = await db.collection('series').doc(docId).get();
+    const data = doc.data();
+    const seasons = data.seasons || [];
+    if (seasons[seasonIdx] && seasons[seasonIdx].episodes[episodeIdx]) {
+        seasons[seasonIdx].episodes[episodeIdx].videoUrl = newUrl;
+        await db.collection('series').doc(docId).update({ seasons: seasons, updatedAt: new Date() });
+        showToast('✅ URL del episodio actualizada');
+        viewSeriesDetails(docId);
+    }
+};
+
+// Eliminar episodio
 window.deleteEpisode = async (docId, seasonIdx, episodeIdx) => {
+    if (isGuest) { showToast('Modo invitado', true); return; }
     if (!confirm('¿Eliminar este episodio?')) return;
     const doc = await db.collection('series').doc(docId).get();
     const data = doc.data();
     const seasons = data.seasons || [];
     if (!seasons[seasonIdx] || !seasons[seasonIdx].episodes[episodeIdx]) return;
+    
     seasons[seasonIdx].episodes.splice(episodeIdx, 1);
     seasons[seasonIdx].episodes.forEach((e, idx) => e.number = idx + 1);
     const totalEpisodes = seasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
@@ -1282,12 +1409,14 @@ async function isAdmin(email) {
     return email === 'admin@streamhub.com';
 }
 
-console.log('✅ Panel con importación robusta');
-console.log('📌 Mejoras:');
-console.log('   - ✅ Reintentos automáticos en peticiones fallidas');
-console.log('   - ✅ Log de depuración visible');
-console.log('   - ✅ Importación manual por TMDB ID');
-console.log('   - ✅ Timeout de 15 segundos por petición');
+console.log('✅ Panel con gestión completa de episodios');
+console.log('📌 Funcionalidades de episodios:');
+console.log('   - ✅ Editar título del episodio');
+console.log('   - ✅ Editar número del episodio (reordena automáticamente)');
+console.log('   - ✅ Editar URL del episodio');
+console.log('   - ✅ Eliminar episodios');
+console.log('   - ✅ Agregar episodios');
+console.log('   - ✅ Guardar cambios con botón individual');
 </script>
 </body>
 </html>
